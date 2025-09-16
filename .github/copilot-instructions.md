@@ -1,167 +1,167 @@
-# Basic Windows App - GitHub Copilot Instructions
+# Basic Windows App - GitHub Copilot 指示書
 
-Basic Windows App is a simple JavaFX desktop application that displays "Hello World" in a GUI window. It serves as a template for developing Java-based Windows applications using JavaFX.
+Basic Windows App は、GUIウィンドウに「Hello World」を表示するシンプルなJavaFXデスクトップアプリケーションです。JavaベースのWindowsアプリケーション開発のテンプレートとして機能します。
 
-**Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
+**常にこの指示書を最初に参照し、ここに記載された情報が不完全または誤りであることが判明した場合のみ、検索やbashコマンドにフォールバックしてください。**
 
-## Working Effectively
+## 効果的な作業方法
 
-### Environment Requirements
-- **Java**: Java 17 or higher (OpenJDK 17.0.16+ confirmed working)
-- **Maven**: 3.6.0 or higher (Maven 3.9.11+ confirmed working) 
-- **OS**: Works on Windows, Linux, and macOS
-- **Display**: JavaFX applications require a display environment for GUI execution
+### 環境要件
+- **Java**: Java 17以上（OpenJDK 17.0.16+で動作確認済み）
+- **Maven**: 3.6.0以上（Maven 3.9.11+で動作確認済み）
+- **OS**: Windows、Linux、macOSで動作
+- **ディスプレイ**: JavaFXアプリケーションはGUI実行のためディスプレイ環境が必要
 
-### Essential Build Commands
-Always run these commands in sequence for a fresh repository setup:
+### 必須ビルドコマンド
+新しいリポジトリセットアップ時は、必ずこれらのコマンドを順番に実行してください：
 
 ```bash
-# Navigate to project root
+# プロジェクトルートに移動
 cd /path/to/basic-windows-app
 
-# Clean install with dependencies - NEVER CANCEL: Takes ~20 seconds
+# 依存関係を含むクリーンインストール - 絶対にキャンセルしないこと：約20秒かかります
 mvn clean install
 ```
 
-**CRITICAL TIMING**: Set timeout to 60+ minutes for `mvn clean install` even though it typically completes in 20 seconds. NEVER CANCEL Maven builds.
+**重要なタイミング**: `mvn clean install`は通常20秒で完了しますが、タイムアウトを60分以上に設定してください。Mavenビルドは絶対にキャンセルしないでください。
 
-### Primary Build Commands
-- `mvn clean compile` - Compile source code (~2 seconds)
-- `mvn clean package` - Create JAR file (~3 seconds) 
-- `mvn clean install` - Full build with dependencies (~20 seconds, NEVER CANCEL: Set 60+ minute timeout)
+### 主要ビルドコマンド
+- `mvn clean compile` - ソースコードをコンパイル（約2秒）
+- `mvn clean package` - JARファイルを作成（約3秒）
+- `mvn clean install` - 依存関係を含む完全ビルド（約20秒、絶対にキャンセルしないこと：60分以上のタイムアウトを設定）
 
-### Running the Application
+### アプリケーションの実行
 
-**IMPORTANT**: JavaFX applications require a graphical display environment and will fail in headless environments (CI, Docker without X11, remote terminals without display forwarding).
+**重要**: JavaFXアプリケーションはグラフィカルディスプレイ環境が必要で、ヘッドレス環境（CI、X11なしのDocker、ディスプレイ転送なしのリモートターミナル）では失敗します。
 
-#### Method 1: Maven JavaFX Plugin (Recommended)
+#### 方法1: Maven JavaFXプラグイン（推奨）
 ```bash
 mvn javafx:run
 ```
-**Note**: This will fail with "UnsupportedOperationException: Unable to open DISPLAY" in headless environments. This is expected behavior, not a build failure.
+**注意**: ヘッドレス環境では「UnsupportedOperationException: Unable to open DISPLAY」で失敗します。これは期待される動作であり、ビルド失敗ではありません。
 
-#### Method 2: Direct Java Execution
+#### 方法2: Javaコマンド直接実行
 ```bash
-# First compile
+# まずコンパイル
 mvn clean compile
 
-# Run with JavaFX modules (requires JavaFX SDK installed separately)
+# JavaFXモジュールを指定して実行（別途JavaFX SDKのインストールが必要）
 java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp target/classes com.example.basicwindowsapp.BasicWindowsApp
 ```
 
-#### Method 3: JAR Execution
+#### 方法3: JAR実行
 ```bash
-# Create JAR
+# JARを作成
 mvn clean package
 
-# JAR location: target/basic-windows-app-0.1.0.jar
-# Note: Standard JAR lacks main manifest - use mvn javafx:run instead
+# JAR場所: target/basic-windows-app-0.1.0.jar
+# 注意: 標準JARにはメインマニフェスト属性がありません - mvn javafx:runを使用してください
 ```
 
-## Validation and Testing
+## 検証とテスト
 
-### Build Validation
-Always run these validation steps after making changes:
-1. `mvn clean compile` - Verify code compiles
-2. `mvn clean package` - Verify JAR creation
-3. `mvn clean install` - Full build validation
+### ビルド検証
+変更後は必ずこれらの検証手順を実行してください：
+1. `mvn clean compile` - コードがコンパイルされることを確認
+2. `mvn clean package` - JARファイルが作成されることを確認
+3. `mvn clean install` - 完全ビルドの検証
 
-### Application Validation
-**MANUAL VALIDATION REQUIREMENT**: When working with UI changes, you MUST test the actual application functionality:
+### アプリケーション検証
+**手動検証要件**: UI変更を行う際は、実際のアプリケーション機能をテストする必要があります：
 
-1. **Run Application**: `mvn javafx:run` (requires display environment)
-2. **Expected Behavior**: 
-   - Window opens with title "Basic Windows App - Hello World"
-   - Window size: 400x300 pixels initially
-   - "Hello World" text displayed in center, large bold font (24px)
-   - Window is resizable with minimum size 300x200 pixels
-3. **Test Scenarios**:
-   - Verify window opens and displays correctly
-   - Test window resizing functionality
-   - Confirm text is properly centered and styled
-   - Test window close functionality
+1. **アプリケーション実行**: `mvn javafx:run`（ディスプレイ環境が必要）
+2. **期待される動作**:
+   - タイトル「Basic Windows App - Hello World」でウィンドウが開く
+   - ウィンドウサイズ: 初期値400x300ピクセル
+   - 「Hello World」テキストが中央に表示、大きな太字フォント（24px）
+   - ウィンドウはリサイズ可能、最小サイズ300x200ピクセル
+3. **テストシナリオ**:
+   - ウィンドウが正しく開いて表示されることを確認
+   - ウィンドウリサイズ機能をテスト
+   - テキストが適切に中央配置され、スタイルが適用されていることを確認
+   - ウィンドウクローズ機能をテスト
 
-### No Tests Available
-This project currently has no unit tests. The `mvn test` phase runs but reports "No tests to run."
+### テストは利用不可
+このプロジェクトには現在ユニットテストがありません。`mvn test`フェーズは実行されますが「No tests to run.」と報告されます。
 
-### No Linting/Formatting Tools
-No Maven formatting or linting plugins are currently configured. Standard Maven compilation warnings are the only code quality checks available.
+### リンター/フォーマットツールなし
+Mavenフォーマットやリンタープラグインは現在設定されていません。標準的なMavenコンパイル警告のみがコード品質チェックとして利用可能です。
 
-## Project Structure and Key Files
+## プロジェクト構造と主要ファイル
 
-### Repository Root Structure
+### リポジトリルート構造
 ```
 basic-windows-app/
-├── .github/                           # GitHub configuration
-├── docs/                              # Documentation
-│   └── DESIGN.md                      # UI design specifications
+├── .github/                           # GitHub設定
+├── docs/                              # ドキュメント
+│   └── DESIGN.md                      # UI設計仕様
 ├── src/
 │   └── main/
 │       └── java/
 │           └── com/example/basicwindowsapp/
-│               └── BasicWindowsApp.java    # Main application class
-├── pom.xml                            # Maven configuration
-├── README.md                          # Japanese documentation
-├── test-app.sh                        # Test script (informational only)
-└── .gitignore                         # Git ignore rules
+│               └── BasicWindowsApp.java    # メインアプリケーションクラス
+├── pom.xml                            # Maven設定
+├── README.md                          # 日本語ドキュメント
+├── test-app.sh                        # テストスクリプト（参考用のみ）
+└── .gitignore                         # Git除外ルール
 ```
 
-### Key Files
-- **BasicWindowsApp.java**: Main JavaFX Application class extending Application
-- **pom.xml**: Maven build configuration with Java 17, JavaFX 21 dependencies
-- **README.md**: Comprehensive Japanese documentation
-- **docs/DESIGN.md**: UI specifications and technical requirements
+### 主要ファイル
+- **BasicWindowsApp.java**: Applicationを継承するメインJavaFXアプリケーションクラス
+- **pom.xml**: Java 17、JavaFX 21依存関係を含むMavenビルド設定
+- **README.md**: 包括的な日本語ドキュメント
+- **docs/DESIGN.md**: UI仕様と技術要件
 
-### Dependencies
-- **JavaFX Controls** (version 21): Core JavaFX UI components
-- **JavaFX FXML** (version 21): FXML markup support (not currently used)
+### 依存関係
+- **JavaFX Controls**（バージョン21）: コアJavaFX UIコンポーネント
+- **JavaFX FXML**（バージョン21）: FXMLマークアップサポート（現在未使用）
 
-## Common Development Tasks
+## 一般的な開発タスク
 
-### Adding New Features
-1. **New Java Classes**: Add to `src/main/java/com/example/basicwindowsapp/`
-2. **Resources**: Add to `src/main/resources/` (create directory if needed)
-3. **Dependencies**: Add to `pom.xml` dependencies section
+### 新機能の追加
+1. **新しいJavaクラス**: `src/main/java/com/example/basicwindowsapp/`に追加
+2. **リソース**: `src/main/resources/`に追加（必要に応じてディレクトリを作成）
+3. **依存関係**: `pom.xml`の依存関係セクションに追加
 
-### Build Troubleshooting
-If build fails:
+### ビルドトラブルシューティング
+ビルドが失敗した場合：
 ```bash
 mvn clean
 mvn compile
 ```
 
-### JavaFX Runtime Issues
-If JavaFX runtime errors occur:
-- Ensure Java 17+ is installed
-- JavaFX is included via Maven dependencies (no separate SDK needed)
-- For manual Java execution, download JavaFX SDK from https://openjfx.io/
+### JavaFXランタイムの問題
+JavaFXランタイムエラーが発生した場合：
+- Java 17+がインストールされていることを確認
+- JavaFXはMaven依存関係に含まれている（別途SDKは不要）
+- 手動Java実行の場合は、https://openjfx.io/ からJavaFX SDKをダウンロード
 
-## Timing Expectations and Timeout Settings
+## タイミング期待値とタイムアウト設定
 
-**CRITICAL**: Always set appropriate timeouts for Maven commands to prevent premature cancellation:
+**重要**: Mavenコマンドの早期キャンセルを防ぐため、適切なタイムアウトを常に設定してください：
 
-- `mvn clean compile`: ~2 seconds (set 5+ minute timeout)
-- `mvn clean package`: ~3 seconds (set 5+ minute timeout)  
-- `mvn clean install`: ~20 seconds (set 60+ minute timeout)
-- `mvn javafx:run`: Immediate failure in headless environments
+- `mvn clean compile`: 約2秒（5分以上のタイムアウトを設定）
+- `mvn clean package`: 約3秒（5分以上のタイムアウトを設定）
+- `mvn clean install`: 約20秒（60分以上のタイムアウトを設定）
+- `mvn javafx:run`: ヘッドレス環境では即座に失敗
 
-**NEVER CANCEL MAVEN BUILDS**: Even fast builds can occasionally take longer due to network issues or system load.
+**Mavenビルドを絶対にキャンセルしないこと**: 高速ビルドでも、ネットワークの問題やシステム負荷により時間がかかることがあります。
 
-## CI/Build Pipeline Notes
-- No GitHub Actions workflows currently exist
-- JavaFX applications cannot run in standard CI environments without display setup
-- Build validation should use `mvn clean install` only
-- Do not attempt `mvn javafx:run` in CI - it will always fail
+## CI/ビルドパイプラインの注意事項
+- 現在GitHub Actionsワークフローは存在しません
+- JavaFXアプリケーションはディスプレイ設定なしの標準CI環境では実行できません
+- ビルド検証には`mvn clean install`のみを使用
+- CIで`mvn javafx:run`を試行しないでください - 常に失敗します
 
-## Development Environment Setup
-For new developers:
-1. Install Java 17+ JDK
-2. Install Maven 3.6.0+
-3. Clone repository
-4. Run `mvn clean install` to verify setup
-5. Use IDE with JavaFX support (IntelliJ IDEA, Eclipse with e(fx)clipse)
+## 開発環境セットアップ
+新しい開発者向け：
+1. Java 17+ JDKをインストール
+2. Maven 3.6.0+をインストール
+3. リポジトリをクローン
+4. `mvn clean install`を実行してセットアップを確認
+5. JavaFXサポートのあるIDEを使用（IntelliJ IDEA、e(fx)clipseを使用したEclipse）
 
-## Error Messages to Expect
-- **"UnsupportedOperationException: Unable to open DISPLAY"**: Normal in headless environments
-- **"no main manifest attribute"**: When trying to run standard JAR - use `mvn javafx:run` instead
-- **JavaFX warnings**: JavaFX dependency warnings during build are normal
+## 予想されるエラーメッセージ
+- **「UnsupportedOperationException: Unable to open DISPLAY」**: ヘッドレス環境では正常
+- **「no main manifest attribute」**: 標準JARを実行しようとした場合 - `mvn javafx:run`を使用してください
+- **JavaFX警告**: ビルド中のJavaFX依存関係警告は正常です
