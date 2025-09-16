@@ -27,6 +27,7 @@
 ```bash
 git clone https://github.com/TakuyaFukumura/basic-windows-app.git
 ```
+
 ```bash
 cd basic-windows-app
 ```
@@ -127,6 +128,7 @@ Java 11以降では、JavaFXはJDKから分離されています。以下の対�
 ```bash
 mvn clean
 ```
+
 ```bash
 mvn compile
 ```
