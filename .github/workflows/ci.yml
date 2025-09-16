@@ -1,0 +1,64 @@
+name: CI
+
+# トリガー設定
+on:
+  push:
+
+# 実行環境とジョブの設定
+jobs:
+  # メインビルドジョブ（Ubuntu）
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ソースコードをチェックアウト
+      - uses: actions/checkout@v4
+
+      # Java 17のセットアップ
+      - name: Java 17のセットアップ
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Mavenの依存関係をキャッシュ
+      - name: Mavenキャッシュの設定
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      
+      # プロジェクトのコンパイル
+      - name: プロジェクトのコンパイル
+        run: mvn clean compile
+
+      # テストの実行
+      - name: テストの実行
+        run: mvn test
+
+      # JARファイルの作成
+      - name: JARファイルの作成
+        run: mvn package
+  
+  # クロスプラットフォームテスト
+  cross-platform-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ windows-latest, macos-latest ]
+
+    steps:
+      # ソースコードをチェックアウト
+      - uses: actions/checkout@v4
+
+      # Java 17のセットアップ
+      - name: Java 17のセットアップ
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 基本的なビルドテスト
+      - name: 基本ビルドテスト（${{ matrix.os }}）
+        run: mvn clean compile
