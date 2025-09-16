@@ -1,14 +1,9 @@
-# Basic Windows App - CI設定
-# シンプルで最低限なGitHub Actionsワークフロー設定
 
 name: CI
 
-# トリガー設定 - pushとpull requestで実行
+# トリガー設定
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 # 実行環境とジョブの設定
 jobs:
