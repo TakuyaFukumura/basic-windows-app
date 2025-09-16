@@ -103,4 +103,3 @@ public class BasicWindowsApp extends Application {
         primaryStage.show();
     }
 }
-
