@@ -1,6 +1,3 @@
-# Dependabot設定ファイル
-# Maven依存関係の自動更新を行うための設定
-
 version: 2
 updates:
   # Maven依存関係の更新設定
@@ -8,24 +5,4 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Tokyo"
-    # プルリクエストの最大数制限
     open-pull-requests-limit: 5
-    # ラベルの設定
-    labels:
-      - "dependencies"
-      - "java"
-    # コミットメッセージのプレフィックス
-    commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
-    # レビュアーの自動割り当て（必要に応じて設定）
-    # reviewers:
-    #   - "username"
-    # 除外する依存関係（必要に応じて設定）
-    # ignore:
-    #   - dependency-name: "org.example:library"
-    #     versions: ["1.x"]
