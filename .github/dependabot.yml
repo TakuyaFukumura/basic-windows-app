@@ -1,3 +1,6 @@
+# Dependabot設定ファイル
+# Maven依存関係とGitHub Actionsの自動更新を行うための設定
+
 version: 2
 updates:
   # Maven依存関係の更新設定
@@ -5,4 +8,37 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    # プルリクエストの最大数制限
     open-pull-requests-limit: 5
+    # ラベルの設定
+    labels:
+      - "dependencies"
+      - "java"
+    # コミットメッセージのプレフィックス
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+
+  # GitHub Actionsの更新設定
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+    # プルリクエストの最大数制限
+    open-pull-requests-limit: 3
+    # ラベルの設定
+    labels:
+      - "dependencies"
+      - "github-actions"
+    # コミットメッセージのプレフィックス
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
