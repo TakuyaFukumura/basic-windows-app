@@ -12,7 +12,7 @@ jobs:
     
     steps:
       # ソースコードをチェックアウト
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Java 17のセットアップ
       - name: Java 17のセットアップ
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       # ソースコードをチェックアウト
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Java 17のセットアップ
       - name: Java 17のセットアップ
