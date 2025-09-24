@@ -3,6 +3,7 @@ package com.example.basicwindowsapp.dao;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -89,7 +90,7 @@ public class DatabaseManager {
             
             if (resultSet.next() && resultSet.getInt(1) == 0) {
                 // デフォルトメッセージを挿入
-                insertDefaultMessage(stmt);
+                insertDefaultMessage(conn);
             }
         }
     }
@@ -97,16 +98,18 @@ public class DatabaseManager {
     /**
      * デフォルトメッセージをデータベースに挿入します
      * 
-     * @param stmt SQLステートメント
+     * @param conn データベース接続
      * @throws SQLException データベース操作エラーが発生した場合
      */
-    private void insertDefaultMessage(Statement stmt) throws SQLException {
+    private void insertDefaultMessage(Connection conn) throws SQLException {
         long currentTime = System.currentTimeMillis();
-        String insertSQL = String.format(
-            "INSERT INTO messages (text, created_at) VALUES ('%s', %d)",
-            "Hello World", currentTime
-        );
-        stmt.execute(insertSQL);
+        String insertSQL = "INSERT INTO messages (text, created_at) VALUES (?, ?)";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+            pstmt.setString(1, "Hello World");
+            pstmt.setLong(2, currentTime);
+            pstmt.executeUpdate();
+        }
         
         System.out.println("デフォルトメッセージを挿入しました: Hello World");
     }

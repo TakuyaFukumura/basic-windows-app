@@ -190,7 +190,7 @@ public class MessageDao {
             int deletedRows = pstmt.executeUpdate();
             
             // 全てのメッセージが削除された場合、デフォルトメッセージを追加
-            if (deletedRows > 0 && getAllMessages().isEmpty()) {
+            if (deletedRows > 0 && getMessageCount() == 0) {
                 insertDefaultMessage();
             }
             
