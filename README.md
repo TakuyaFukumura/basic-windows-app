@@ -90,10 +90,17 @@ mvn clean compile
 次に、JavaFXモジュールを指定してアプリケーションを実行します：
 
 ```bash
-java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp target/classes com.example.basicwindowsapp.BasicWindowsApp
+java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp "target/classes:path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
 ```
 
-**注意**: `path/to/javafx/lib`は、お使いの環境のJavaFXライブラリパスに置き換えてください。
+**注意**: `path/to/javafx/lib`はJavaFX SDKのライブラリパス、
+`path/to/sqlite-jdbc.jar`はMavenから取得したSQLite JDBC JARのパスに置き換えてください。
+Windowsではクラスパスの区切り文字に`;`を使用し、macOS/Linuxでは`:`を使用します。
+例えばWindowsでは次のように実行します：
+
+```cmd
+java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp "target/classes;path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
+```
 
 ### 方法3: JARファイルの作成
 
