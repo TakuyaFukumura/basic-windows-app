@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -26,6 +27,7 @@ import javafx.stage.FileChooser;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -94,6 +96,8 @@ public class BasicWindowsApp extends Application {
      * ダークモードが有効かどうか
      */
     private boolean darkMode;
+
+    private boolean ioTaskRunning;
 
     /**
      * アプリケーション共通のスタイルシート
@@ -218,6 +222,19 @@ public class BasicWindowsApp extends Application {
     private BorderPane createMainLayout() {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("app-root");
+        root.setOnDragOver(event -> {
+            if (event.getDragboard().hasFiles() && !ioTaskRunning) {
+                event.acceptTransferModes(javafx.scene.input.TransferMode.COPY);
+            }
+            event.consume();
+        });
+        root.setOnDragDropped(event -> {
+            if (!ioTaskRunning && event.getDragboard().hasFiles()) {
+                handleDroppedFiles(event.getDragboard().getFiles());
+            }
+            event.setDropCompleted(true);
+            event.consume();
+        });
         
         // 上部：メインメッセージ表示エリア
         VBox topSection = createTopSection(root);
@@ -356,19 +373,39 @@ public class BasicWindowsApp extends Application {
             return;
         }
 
-        try {
-            MessageFileService.Format format = getFileFormat(file.toPath());
-            List<Message> messages = MessageFileService.read(file.toPath(), format);
-            for (Message message : messages) {
-                messageDao.insertMessage(message);
+        importMessages(file.toPath());
+    }
+
+    private void handleDroppedFiles(List<java.io.File> files) {
+        if (files.size() != 1) {
+            showWarningDialog("インポートエラー", "一度に取り込めるファイルは1つだけです。");
+            return;
+        }
+        Path path = files.get(0).toPath();
+        if (!isSupportedFile(path)) {
+            showWarningDialog("インポートエラー", "CSVまたはテキストファイルを指定してください。");
+            return;
+        }
+        importMessages(path);
+    }
+
+    private void importMessages(Path path) {
+        Task<Integer> task = new Task<>() {
+            @Override
+            protected Integer call() throws IOException, SQLException {
+                MessageFileService.Format format = getFileFormat(path);
+                List<Message> messages = MessageFileService.read(path, format);
+                for (Message message : messages) {
+                    messageDao.insertMessage(message);
+                }
+                return messages.size();
             }
+        };
+        executeIoTask(task, count -> {
             refreshMessageDisplay();
             refreshMessageTable();
-            showInfoDialog("成功", messages.size() + "件のメッセージを取り込みました。");
-        } catch (IOException | SQLException e) {
-            LOGGER.log(Level.WARNING, "メッセージのインポートに失敗しました。", e);
-            showErrorDialog("インポートエラー", "メッセージのインポートに失敗しました: " + e.getMessage());
-        }
+            showInfoDialog("成功", count + "件のメッセージを取り込みました。");
+        }, "インポート");
     }
 
     private void exportMessages() {
@@ -378,15 +415,19 @@ public class BasicWindowsApp extends Application {
         if (file == null) {
             return;
         }
-
-        try {
-            MessageFileService.Format format = getFileFormat(file.toPath());
-            MessageFileService.write(file.toPath(), messageData, format);
-            showInfoDialog("成功", "メッセージをエクスポートしました。");
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, "メッセージのエクスポートに失敗しました。", e);
-            showErrorDialog("エクスポートエラー", "メッセージのエクスポートに失敗しました: " + e.getMessage());
+        if (file.exists() && !confirmOverwrite(file.toPath())) {
+            return;
         }
+
+        List<Message> messages = new ArrayList<>(messageData);
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws IOException {
+                MessageFileService.write(file.toPath(), messages, getFileFormat(file.toPath()));
+                return null;
+            }
+        };
+        executeIoTask(task, ignored -> showInfoDialog("成功", "メッセージをエクスポートしました。"), "エクスポート");
     }
 
     private FileChooser createMessageFileChooser(String title) {
@@ -403,6 +444,44 @@ public class BasicWindowsApp extends Application {
         return fileName.endsWith(".txt")
                 ? MessageFileService.Format.TEXT
                 : MessageFileService.Format.CSV;
+    }
+
+    private boolean isSupportedFile(Path path) {
+        String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return fileName.endsWith(".csv") || fileName.endsWith(".txt");
+    }
+
+    private boolean confirmOverwrite(Path path) {
+        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dialog.setTitle("上書き確認");
+        dialog.setHeaderText("ファイルは既に存在します。");
+        dialog.setContentText(path.getFileName() + "を上書きしますか？");
+        styleDialog(dialog);
+        Optional<ButtonType> result = dialog.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+
+    private <T> void executeIoTask(Task<T> task, java.util.function.Consumer<T> onSucceeded,
+                                   String operation) {
+        if (ioTaskRunning) {
+            showWarningDialog("処理中", "別のファイル処理が完了するまでお待ちください。");
+            return;
+        }
+        ioTaskRunning = true;
+        task.setOnSucceeded(event -> {
+            ioTaskRunning = false;
+            onSucceeded.accept(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            ioTaskRunning = false;
+            Throwable error = task.getException();
+            LOGGER.log(Level.WARNING, "メッセージの" + operation + "に失敗しました。", error);
+            showErrorDialog(operation + "エラー", "メッセージの" + operation + "に失敗しました: "
+                    + error.getMessage());
+        });
+        Thread thread = new Thread(task, "message-" + operation);
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
