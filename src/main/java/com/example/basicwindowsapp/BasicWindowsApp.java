@@ -68,7 +68,7 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
-    private static final String APP_VERSION = "0.15.0";
+    private static final String APP_VERSION = "0.15.1";
     /**
      * アプリケーション共通のスタイルシート
      */

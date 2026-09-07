@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MessageFileServiceTest {
 
@@ -44,6 +45,33 @@ class MessageFileServiceTest {
 
             assertEquals(List.of("First", "Second"),
                     result.stream().map(Message::getText).toList());
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    @Test
+    void textExportRejectsMessageContainingNewline() throws Exception {
+        Path file = Files.createTempFile("messages", ".txt");
+        try {
+            Message message = new Message(1, "First\nSecond", 123L);
+
+            assertThrows(IllegalArgumentException.class,
+                    () -> MessageFileService.write(
+                            file, List.of(message), MessageFileService.Format.TEXT));
+        } finally {
+            Files.deleteIfExists(file);
+        }
+    }
+
+    @Test
+    void csvRejectsQuoteAfterUnquotedText() throws Exception {
+        Path file = Files.createTempFile("messages", ".csv");
+        try {
+            Files.writeString(file, "id,text,created_at\n1,invalid\"text,123\n");
+
+            assertThrows(Exception.class,
+                    () -> MessageFileService.read(file, MessageFileService.Format.CSV));
         } finally {
             Files.deleteIfExists(file);
         }

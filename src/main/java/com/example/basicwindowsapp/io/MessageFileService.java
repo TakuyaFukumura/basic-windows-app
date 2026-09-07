@@ -33,12 +33,12 @@ public final class MessageFileService {
         if (format == Format.CSV) {
             lines.add(CSV_HEADER);
             for (Message message : messages) {
-                lines.add(message.getId() + "," + escapeCsv(message.getText()) + ","
+                lines.add(message.getId() + "," + escapeCsv(MessageValidator.normalize(message.getText())) + ","
                         + message.getCreatedAt());
             }
         } else {
             for (Message message : messages) {
-                lines.add(message.getText());
+                lines.add(MessageValidator.normalize(message.getText()));
             }
         }
         Files.write(path, lines, StandardCharsets.UTF_8);
@@ -101,25 +101,41 @@ public final class MessageFileService {
     private static List<String> parseCsvLine(String line) throws IOException {
         List<String> fields = new ArrayList<>();
         StringBuilder field = new StringBuilder();
-        boolean quoted = false;
+        boolean inQuotes = false;
+        boolean afterClosingQuote = false;
 
         for (int i = 0; i < line.length(); i++) {
             char current = line.charAt(i);
-            if (current == '"') {
-                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+            if (inQuotes) {
+                if (current == '"' && i + 1 < line.length() && line.charAt(i + 1) == '"') {
                     field.append('"');
                     i++;
+                } else if (current == '"') {
+                    inQuotes = false;
+                    afterClosingQuote = true;
                 } else {
-                    quoted = !quoted;
+                    field.append(current);
                 }
-            } else if (current == ',' && !quoted) {
+            } else if (afterClosingQuote) {
+                if (current != ',') {
+                    throw new IOException("CSVの引用符の後に不正な文字があります。");
+                }
+                fields.add(field.toString());
+                field.setLength(0);
+                afterClosingQuote = false;
+            } else if (current == '"') {
+                if (!field.isEmpty()) {
+                    throw new IOException("CSVの引用符の位置が正しくありません。");
+                }
+                inQuotes = true;
+            } else if (current == ',') {
                 fields.add(field.toString());
                 field.setLength(0);
             } else {
                 field.append(current);
             }
         }
-        if (quoted) {
+        if (inQuotes) {
             throw new IOException("CSVの引用符が閉じられていません。");
         }
         fields.add(field.toString());
