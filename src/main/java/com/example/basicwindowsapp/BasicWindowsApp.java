@@ -250,6 +250,7 @@ public class BasicWindowsApp extends Application {
 
     private TabPane createTabPane(BorderPane root) {
         TabPane tabPane = new TabPane();
+        tabPane.getStyleClass().add("app-tab-pane");
         Tab messagesTab = new Tab("メッセージ");
         messagesTab.setClosable(false);
         messagesTab.setContent(createMessageLayout(root));
@@ -306,14 +307,26 @@ public class BasicWindowsApp extends Application {
 
         ToggleButton themeToggle = new ToggleButton(darkMode ? "🌙" : "☀");
         themeToggle.setAccessibleText("テーマ切替");
-        themeToggle.setTooltip(new Tooltip(darkMode ? "ライトモードに切替" : "ダークモードに切替"));
+        Tooltip themeTooltip = new Tooltip(darkMode ? "ライトモードに切替" : "ダークモードに切替");
+        themeTooltip.getStyleClass().add("app-tooltip");
+        if (darkMode) {
+            themeTooltip.getStyleClass().add("dark-mode");
+        }
+        themeToggle.setTooltip(themeTooltip);
         themeToggle.setSelected(darkMode);
         themeToggle.setOnAction(e -> {
             darkMode = themeToggle.isSelected();
             settings.setDarkMode(darkMode);
             saveSettings((Stage) themeToggle.getScene().getWindow());
             themeToggle.setText(darkMode ? "🌙" : "☀");
-            themeToggle.getTooltip().setText(darkMode ? "ライトモードに切替" : "ダークモードに切替");
+            themeTooltip.setText(darkMode ? "ライトモードに切替" : "ダークモードに切替");
+            if (darkMode) {
+                if (!themeTooltip.getStyleClass().contains("dark-mode")) {
+                    themeTooltip.getStyleClass().add("dark-mode");
+                }
+            } else {
+                themeTooltip.getStyleClass().remove("dark-mode");
+            }
             applyTheme(root);
         });
 
