@@ -41,6 +41,10 @@ git clone https://github.com/TakuyaFukumura/basic-windows-app.git
 cd basic-windows-app
 ```
 
+### GitHub Copilot用スキル
+
+`.github/skills/` に、リポジトリの改修、PRマージ・リリース、スキル改善を支援する手順を用意しています。Java/Maven/JavaFXの構成と、このリポジトリのブランチ・検証・安全ルールに合わせて記載しています。
+
 ### 2. 依存関係のインストール
 
 #### Maven Wrapperを使用する場合（推奨）
