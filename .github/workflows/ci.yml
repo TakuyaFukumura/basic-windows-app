@@ -4,6 +4,10 @@ name: CI
 on:
   push:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # 実行環境とジョブの設定
 jobs:
   # メインビルドジョブ（Ubuntu）
