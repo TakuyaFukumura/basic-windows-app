@@ -352,8 +352,6 @@ public class BasicWindowsApp extends Application {
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
-        Button importButton = new Button("インポート");
-        Button exportButton = new Button("エクスポート");
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -363,11 +361,9 @@ public class BasicWindowsApp extends Application {
             refreshMessageDisplay();
             refreshMessageTable();
         });
-        importButton.setOnAction(e -> importMessages());
-        exportButton.setOnAction(e -> exportMessages());
         
         bottomSection.getChildren().addAll(
-                addButton, editButton, deleteButton, refreshButton, importButton, exportButton);
+                addButton, editButton, deleteButton, refreshButton);
         
         return bottomSection;
     }
@@ -438,16 +434,7 @@ public class BasicWindowsApp extends Application {
         });
         refreshButton.setTooltip(new Tooltip("更新 (F5)"));
 
-        Button importButton = new Button("インポート");
-        importButton.setOnAction(event -> importMessages());
-        importButton.setTooltip(new Tooltip("インポート (Ctrl+I)"));
-
-        Button exportButton = new Button("エクスポート");
-        exportButton.setOnAction(event -> exportMessages());
-        exportButton.setTooltip(new Tooltip("エクスポート (Ctrl+Shift+E)"));
-
-        ToolBar toolBar = new ToolBar(addButton, editButton, deleteButton, refreshButton,
-                new Separator(), importButton, exportButton);
+        ToolBar toolBar = new ToolBar(addButton, editButton, deleteButton, refreshButton);
         toolBar.setAccessibleText("メッセージ操作ツールバー");
         return toolBar;
     }
