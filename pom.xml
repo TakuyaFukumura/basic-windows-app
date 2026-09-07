@@ -6,7 +6,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>basic-windows-app</artifactId>
-    <version>0.15.1</version>
+    <version>0.16.0</version>
     <packaging>jar</packaging>
 
     <name>Basic Windows App</name>
@@ -38,13 +38,6 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <!-- JavaFX FXML -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 

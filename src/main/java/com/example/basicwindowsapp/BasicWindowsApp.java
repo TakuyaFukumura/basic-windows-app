@@ -32,7 +32,9 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -58,7 +60,7 @@ import java.util.logging.Logger;
  * <h3>使用方法：</h3>
  * <ul>
  *   <li>Maven: {@code mvn javafx:run}</li>
- *   <li>Java: {@code java --module-path /path/to/javafx/lib --add-modules javafx.controls,javafx.fxml com.example.basicwindowsapp.BasicWindowsApp}</li>
+ *   <li>Java: {@code java --module-path /path/to/javafx/lib --add-modules javafx.controls com.example.basicwindowsapp.BasicWindowsApp}</li>
  * </ul>
  *
  * @author basic-windows-app
@@ -68,7 +70,11 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
-    private static final String APP_VERSION = "0.15.1";
+    private static final String APP_VERSION = "0.16.0";
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneId.systemDefault());
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy/MM/dd").withZone(ZoneId.systemDefault());
     /**
      * アプリケーション共通のスタイルシート
      */
@@ -714,10 +720,14 @@ public class BasicWindowsApp extends Application {
         textCol.setCellFactory(TextFieldTableCell.forTableColumn());
         textCol.setOnEditCommit(event -> {
             Message message = event.getRowValue();
+            String originalText = message.getText();
             try {
                 String normalizedText = MessageValidator.normalize(event.getNewValue());
                 Message updatedMessage = new Message(message.getId(), normalizedText,
                         message.getCreatedAt());
+                // Keep the model aligned with the database until the update succeeds.
+                message.setText(originalText);
+                messageTable.refresh();
                 Task<Integer> task = new Task<>() {
                     @Override
                     protected Integer call() throws SQLException {
@@ -726,6 +736,7 @@ public class BasicWindowsApp extends Application {
                 };
                 executeDatabaseTask(task, ignored -> refreshMessages(), "編集");
             } catch (IllegalArgumentException e) {
+                message.setText(originalText);
                 messageTable.refresh();
                 showWarningDialog("入力エラー", e.getMessage());
             }
@@ -736,8 +747,8 @@ public class BasicWindowsApp extends Application {
         TableColumn<Message, String> dateCol = new TableColumn<>("作成日時");
         dateCol.setCellValueFactory(cellData -> {
             long timestamp = cellData.getValue().getCreatedAt();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            return new javafx.beans.property.SimpleStringProperty(sdf.format(new Date(timestamp)));
+            return new javafx.beans.property.SimpleStringProperty(
+                    DATE_TIME_FORMATTER.format(Instant.ofEpochMilli(timestamp)));
         });
         dateCol.setPrefWidth(150);
 
@@ -800,9 +811,8 @@ public class BasicWindowsApp extends Application {
             return;
         }
         Map<String, Integer> counts = new TreeMap<>();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
         for (Message message : messageData) {
-            String date = format.format(new Date(message.getCreatedAt()));
+            String date = DATE_FORMATTER.format(Instant.ofEpochMilli(message.getCreatedAt()));
             counts.merge(date, 1, Integer::sum);
         }
         XYChart.Series<String, Number> series = new XYChart.Series<>();
