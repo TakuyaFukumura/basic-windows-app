@@ -50,6 +50,10 @@
     -fx-background-color: #ffffff;
 }
 
+.status-label {
+    -fx-text-fill: #5f6368;
+}
+
 .app-root .button,
 .app-root .toggle-button {
     -fx-text-fill: #202124;
@@ -137,6 +141,10 @@
 .app-root.dark-mode .center-section,
 .app-root.dark-mode .bottom-section {
     -fx-background-color: #202124;
+}
+
+.app-root.dark-mode .status-label {
+    -fx-text-fill: #bdc1c6;
 }
 
 .app-root.dark-mode .button,

@@ -103,6 +103,10 @@ public class BasicWindowsApp extends Application {
 
     private boolean ioTaskRunning;
 
+    private Label statusLabel;
+
+    private ProgressIndicator progressIndicator;
+
     /**
      * アプリケーション共通のスタイルシート
      */
@@ -395,6 +399,14 @@ public class BasicWindowsApp extends Application {
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
+
+        statusLabel = new Label("準備完了");
+        statusLabel.getStyleClass().add("status-label");
+        progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(18, 18);
+        progressIndicator.setVisible(false);
+        Region statusSpacer = new Region();
+        HBox.setHgrow(statusSpacer, Priority.ALWAYS);
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -406,7 +418,8 @@ public class BasicWindowsApp extends Application {
         });
         
         bottomSection.getChildren().addAll(
-                addButton, editButton, deleteButton, refreshButton);
+                addButton, editButton, deleteButton, refreshButton,
+                statusSpacer, progressIndicator, statusLabel);
         
         return bottomSection;
     }
@@ -559,12 +572,21 @@ public class BasicWindowsApp extends Application {
             return;
         }
         ioTaskRunning = true;
+        statusLabel.setText(operation + "中...");
+        progressIndicator.progressProperty().bind(task.progressProperty());
+        progressIndicator.setVisible(true);
         task.setOnSucceeded(event -> {
             ioTaskRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "完了");
             onSucceeded.accept(task.getValue());
         });
         task.setOnFailed(event -> {
             ioTaskRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "失敗");
             Throwable error = task.getException();
             LOGGER.log(Level.WARNING, "メッセージの" + operation + "に失敗しました。", error);
             showErrorDialog(operation + "エラー", "メッセージの" + operation + "に失敗しました: "
