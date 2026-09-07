@@ -15,29 +15,13 @@ concurrency:
 jobs:
   # メインビルドジョブ（Ubuntu）
   build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    
-    steps:
-      # ソースコードをチェックアウト
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      # Java 24のセットアップ
-      - name: Java 24のセットアップ
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
-        with:
-          java-version: '24'
-          distribution: 'temurin'
-          cache: maven
-      
-      # ビルド、テスト、パッケージの検証
-      - name: ビルドとテスト
-        run: ./mvnw -B clean verify
+    uses: ./.github/workflows/maven-verify.yml
+    with:
+      runner: ubuntu-latest
+      maven-command: ./mvnw
   
   # クロスプラットフォームテスト
   cross-platform-test:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -47,18 +31,7 @@ jobs:
           - os: macos-latest
             maven-command: ./mvnw
 
-    steps:
-      # ソースコードをチェックアウト
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      # Java 24のセットアップ
-      - name: Java 24のセットアップ
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
-        with:
-          java-version: '24'
-          distribution: 'temurin'
-          cache: maven
-
-      # ビルドとテスト
-      - name: ビルドとテスト（${{ matrix.os }}）
-        run: ${{ matrix.maven-command }} -B clean verify
+    uses: ./.github/workflows/maven-verify.yml
+    with:
+      runner: ${{ matrix.os }}
+      maven-command: ${{ matrix.maven-command }}
