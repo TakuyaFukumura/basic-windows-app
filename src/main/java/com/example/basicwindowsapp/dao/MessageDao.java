@@ -200,7 +200,7 @@ public class MessageDao {
                 if (deletedRows > 0 && getMessageCount(conn) == 0) {
                     insertDefaultMessage(conn);
                 }
-                
+
                 conn.commit();
                 return deletedRows;
             } catch (SQLException e) {
@@ -208,6 +208,7 @@ public class MessageDao {
                 throw e;
             }
         }
+
     }
     
     /**
@@ -230,6 +231,43 @@ public class MessageDao {
                     insertDefaultMessage(conn);
                 }
                 
+                conn.commit();
+                return deletedRows;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * 指定されたメッセージをまとめて削除します。
+     *
+     * @param ids 削除するメッセージID
+     * @return 削除された行数
+     * @throws SQLException データベース操作エラーが発生した場合
+     */
+    public int deleteMessages(List<Integer> ids) throws SQLException {
+        if (ids.isEmpty()) {
+            return 0;
+        }
+        try (Connection conn = dbManager.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstmt = conn.prepareStatement(
+                    "DELETE FROM messages WHERE id = ?")) {
+                for (int id : ids) {
+                    pstmt.setInt(1, id);
+                    pstmt.addBatch();
+                }
+                int deletedRows = 0;
+                for (int result : pstmt.executeBatch()) {
+                    if (result > 0) {
+                        deletedRows += result;
+                    }
+                }
+                if (deletedRows > 0 && getMessageCount(conn) == 0) {
+                    insertDefaultMessage(conn);
+                }
                 conn.commit();
                 return deletedRows;
             } catch (SQLException e) {

@@ -154,7 +154,7 @@ public class DatabaseManager {
      *
      * @return データベースファイルのパス
      */
-    private Path getDatabasePath() {
+    public Path getDatabasePath() {
         return DATA_DIRECTORY.resolve(DB_NAME);
     }
 }
