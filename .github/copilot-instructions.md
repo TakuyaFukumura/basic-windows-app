@@ -7,7 +7,7 @@ Basic Windows App は、GUIウィンドウに「Hello World」を表示するシ
 ## 効果的な作業方法
 
 ### 環境要件
-- **Java**: Java 17以上（OpenJDK 17.0.16+で動作確認済み）
+- **Java**: Java 24以上（OpenJDK 24+で動作確認済み）
 - **Maven**: 3.6.0以上（Maven 3.9.11+で動作確認済み）
 - **OS**: Windows、Linux、macOSで動作
 - **ディスプレイ**: JavaFXアプリケーションはGUI実行のためディスプレイ環境が必要
@@ -108,7 +108,7 @@ basic-windows-app/
 
 ### 主要ファイル
 - **BasicWindowsApp.java**: Applicationを継承するメインJavaFXアプリケーションクラス
-- **pom.xml**: Java 17、JavaFX 21依存関係を含むMavenビルド設定
+- **pom.xml**: Java 24、JavaFX 26.0.2依存関係を含むMavenビルド設定
 - **README.md**: 包括的な日本語ドキュメント
 - **docs/DESIGN.md**: UI仕様と技術要件
 
@@ -132,7 +132,7 @@ mvn compile
 
 ### JavaFXランタイムの問題
 JavaFXランタイムエラーが発生した場合：
-- Java 17+がインストールされていることを確認
+- Java 24+がインストールされていることを確認
 - JavaFXはMaven依存関係に含まれている（別途SDKは不要）
 - 手動Java実行の場合は、https://openjfx.io/ からJavaFX SDKをダウンロード
 
@@ -155,7 +155,7 @@ JavaFXランタイムエラーが発生した場合：
 
 ## 開発環境セットアップ
 新しい開発者向け：
-1. Java 17+ JDKをインストール
+1. Java 24+ JDKをインストール
 2. Maven 3.6.0+をインストール
 3. リポジトリをクローン
 4. `mvn clean install`を実行してセットアップを確認

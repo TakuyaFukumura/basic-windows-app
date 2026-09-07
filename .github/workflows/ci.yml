@@ -14,11 +14,11 @@ jobs:
       # ソースコードをチェックアウト
       - uses: actions/checkout@v6
 
-      # Java 17のセットアップ
-      - name: Java 17のセットアップ
+      # Java 24のセットアップ
+      - name: Java 24のセットアップ
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: '24'
           distribution: 'temurin'
 
       # Mavenの依存関係をキャッシュ
@@ -52,11 +52,11 @@ jobs:
       # ソースコードをチェックアウト
       - uses: actions/checkout@v6
 
-      # Java 17のセットアップ
-      - name: Java 17のセットアップ
+      # Java 24のセットアップ
+      - name: Java 24のセットアップ
         uses: actions/setup-java@v5
         with:
-          java-version: '17'
+          java-version: '24'
           distribution: 'temurin'
 
       # 基本的なビルドテスト

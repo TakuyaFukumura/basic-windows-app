@@ -13,8 +13,8 @@
     <description>基本的なJavaFXを使用したWindowsアプリケーション</description>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>24</maven.compiler.source>
+        <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>26.0.2</javafx.version>
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
@@ -52,8 +52,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <source>24</source>
+                    <target>24</target>
                 </configuration>
             </plugin>
 
