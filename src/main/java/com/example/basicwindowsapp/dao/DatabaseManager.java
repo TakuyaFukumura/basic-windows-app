@@ -94,11 +94,11 @@ public class DatabaseManager {
 
             // デフォルトメッセージが存在するかチェック
             String checkDataSQL = "SELECT COUNT(*) FROM messages";
-            var resultSet = stmt.executeQuery(checkDataSQL);
-
-            if (resultSet.next() && resultSet.getInt(1) == 0) {
-                // デフォルトメッセージを挿入
-                insertDefaultMessage(conn);
+            try (ResultSet resultSet = stmt.executeQuery(checkDataSQL)) {
+                if (resultSet.next() && resultSet.getInt(1) == 0) {
+                    // デフォルトメッセージを挿入
+                    insertDefaultMessage(conn);
+                }
             }
         }
     }
