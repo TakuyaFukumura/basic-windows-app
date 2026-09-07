@@ -21,6 +21,10 @@
     -fx-background-color: #f0f0f0;
 }
 
+.top-header {
+    -fx-alignment: center-left;
+}
+
 .center-section,
 .bottom-section {
     -fx-background-color: #ffffff;

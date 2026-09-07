@@ -13,6 +13,8 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -191,7 +193,7 @@ public class BasicWindowsApp extends Application {
         root.getStyleClass().add("app-root");
         
         // 上部：メインメッセージ表示エリア
-        VBox topSection = createTopSection();
+        VBox topSection = createTopSection(root);
         root.setTop(topSection);
         
         // 中央：メッセージ一覧テーブル
@@ -199,7 +201,7 @@ public class BasicWindowsApp extends Application {
         root.setCenter(centerSection);
         
         // 下部：操作ボタン
-        HBox bottomSection = createBottomSection(root);
+        HBox bottomSection = createBottomSection();
         root.setBottom(bottomSection);
         
         return root;
@@ -210,7 +212,7 @@ public class BasicWindowsApp extends Application {
      * 
      * @return 上部セクション
      */
-    private VBox createTopSection() {
+    private VBox createTopSection(BorderPane root) {
         VBox topSection = new VBox(10);
         topSection.setPadding(new Insets(20));
         topSection.setAlignment(Pos.CENTER);
@@ -218,8 +220,23 @@ public class BasicWindowsApp extends Application {
         
         Label titleLabel = new Label("現在のメッセージ");
         titleLabel.getStyleClass().add("section-title");
+
+        Region headerSpacer = new Region();
+        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
+
+        ToggleButton themeToggle = new ToggleButton("🌙 ダークモード");
+        themeToggle.setSelected(darkMode);
+        themeToggle.setOnAction(e -> {
+            darkMode = themeToggle.isSelected();
+            themeToggle.setText(darkMode ? "☀ ライトモード" : "🌙 ダークモード");
+            applyTheme(root);
+        });
+
+        HBox header = new HBox(10, titleLabel, headerSpacer, themeToggle);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.getStyleClass().add("top-header");
         
-        topSection.getChildren().addAll(titleLabel, mainMessageLabel);
+        topSection.getChildren().addAll(header, mainMessageLabel);
         
         return topSection;
     }
@@ -247,7 +264,7 @@ public class BasicWindowsApp extends Application {
      * 
      * @return 下部セクション
      */
-    private HBox createBottomSection(BorderPane root) {
+    private HBox createBottomSection() {
         HBox bottomSection = new HBox(10);
         bottomSection.setPadding(new Insets(20));
         bottomSection.setAlignment(Pos.CENTER);
@@ -258,12 +275,6 @@ public class BasicWindowsApp extends Application {
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
-        ToggleButton themeToggle = new ToggleButton("ダークモード");
-        themeToggle.setSelected(darkMode);
-        themeToggle.setOnAction(e -> {
-            darkMode = themeToggle.isSelected();
-            applyTheme(root);
-        });
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -274,7 +285,7 @@ public class BasicWindowsApp extends Application {
             refreshMessageTable();
         });
         
-        bottomSection.getChildren().addAll(addButton, editButton, deleteButton, refreshButton, themeToggle);
+        bottomSection.getChildren().addAll(addButton, editButton, deleteButton, refreshButton);
         
         return bottomSection;
     }
