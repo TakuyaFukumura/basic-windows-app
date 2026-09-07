@@ -25,7 +25,7 @@ public final class BackupService {
     /**
      * データベースと設定を1つのZIPファイルへ保存します。
      *
-     * @param archive 出力先
+     * @param archive  出力先
      * @param database データベースファイル
      * @param settings 設定ファイル
      * @throws IOException 入出力に失敗した場合
@@ -43,7 +43,7 @@ public final class BackupService {
     /**
      * ZIPバックアップからデータベースと設定を復元します。
      *
-     * @param archive 入力元
+     * @param archive  入力元
      * @param database 復元先データベース
      * @param settings 復元先設定ファイル
      * @throws IOException 入出力または形式検証に失敗した場合

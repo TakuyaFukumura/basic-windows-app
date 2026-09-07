@@ -4,61 +4,34 @@ name: CI
 on:
   push:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # 実行環境とジョブの設定
 jobs:
   # メインビルドジョブ（Ubuntu）
   build:
-    runs-on: ubuntu-latest
-    
-    steps:
-      # ソースコードをチェックアウト
-      - uses: actions/checkout@v6
-
-      # Java 24のセットアップ
-      - name: Java 24のセットアップ
-        uses: actions/setup-java@v5
-        with:
-          java-version: '24'
-          distribution: 'temurin'
-
-      # Mavenの依存関係をキャッシュ
-      - name: Mavenキャッシュの設定
-        uses: actions/cache@v5
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-      
-      # プロジェクトのコンパイル
-      - name: プロジェクトのコンパイル
-        run: mvn clean compile
-
-      # テストの実行
-      - name: テストの実行
-        run: mvn test
-
-      # JARファイルの作成
-      - name: JARファイルの作成
-        run: mvn package
+    uses: ./.github/workflows/maven-verify.yml
+    with:
+      runner: ubuntu-latest
+      maven-command: ./mvnw
   
   # クロスプラットフォームテスト
   cross-platform-test:
-    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ windows-latest, macos-latest ]
+        include:
+          - os: windows-latest
+            maven-command: .\mvnw.cmd
+          - os: macos-latest
+            maven-command: ./mvnw
 
-    steps:
-      # ソースコードをチェックアウト
-      - uses: actions/checkout@v6
-
-      # Java 24のセットアップ
-      - name: Java 24のセットアップ
-        uses: actions/setup-java@v5
-        with:
-          java-version: '24'
-          distribution: 'temurin'
-
-      # 基本的なビルドテスト
-      - name: 基本ビルドテスト（${{ matrix.os }}）
-        run: mvn clean compile
+    uses: ./.github/workflows/maven-verify.yml
+    with:
+      runner: ${{ matrix.os }}
+      maven-command: ${{ matrix.maven-command }}

@@ -23,9 +23,9 @@ public final class MessageFileService {
     /**
      * 指定形式でメッセージをファイルへ書き出します。
      *
-     * @param path 出力先
+     * @param path     出力先
      * @param messages 書き出すメッセージ
-     * @param format ファイル形式
+     * @param format   ファイル形式
      * @throws IOException ファイル操作に失敗した場合
      */
     public static void write(Path path, List<Message> messages, Format format) throws IOException {
@@ -47,7 +47,7 @@ public final class MessageFileService {
     /**
      * 指定形式のファイルからメッセージを読み込みます。
      *
-     * @param path 入力元
+     * @param path   入力元
      * @param format ファイル形式
      * @return 読み込んだメッセージ
      * @throws IOException ファイル操作または形式解析に失敗した場合
