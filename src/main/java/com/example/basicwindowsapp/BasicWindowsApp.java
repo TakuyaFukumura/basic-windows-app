@@ -23,6 +23,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -236,9 +239,12 @@ public class BasicWindowsApp extends Application {
             event.consume();
         });
         
+        MenuBar menuBar = createMenuBar();
+        ToolBar toolBar = createToolBar();
+
         // 上部：メインメッセージ表示エリア
         VBox topSection = createTopSection(root);
-        root.setTop(topSection);
+        root.setTop(new VBox(menuBar, toolBar, topSection));
         
         // 中央：メッセージ一覧テーブル
         VBox centerSection = createCenterSection();
@@ -364,6 +370,86 @@ public class BasicWindowsApp extends Application {
                 addButton, editButton, deleteButton, refreshButton, importButton, exportButton);
         
         return bottomSection;
+    }
+
+    private MenuBar createMenuBar() {
+        Menu messageMenu = new Menu("メッセージ");
+        MenuItem addItem = createMenuItem("新規作成", new KeyCodeCombination(KeyCode.N,
+                KeyCombination.CONTROL_DOWN), this::showAddMessageDialog);
+        MenuItem editItem = createMenuItem("編集", new KeyCodeCombination(KeyCode.E,
+                KeyCombination.CONTROL_DOWN), this::showEditMessageDialog);
+        MenuItem deleteItem = createMenuItem("削除", new KeyCodeCombination(KeyCode.DELETE),
+                this::deleteSelectedMessage);
+        MenuItem refreshItem = createMenuItem("更新", new KeyCodeCombination(KeyCode.F5),
+                () -> {
+                    refreshMessageDisplay();
+                    refreshMessageTable();
+                });
+        messageMenu.getItems().addAll(addItem, editItem, deleteItem, new SeparatorMenuItem(),
+                refreshItem);
+
+        Menu fileMenu = new Menu("ファイル");
+        fileMenu.getItems().addAll(
+                createMenuItem("インポート", new KeyCodeCombination(KeyCode.I,
+                        KeyCombination.CONTROL_DOWN), this::importMessages),
+                createMenuItem("エクスポート", new KeyCodeCombination(KeyCode.E,
+                        KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN), this::exportMessages),
+                new SeparatorMenuItem(),
+                createMenuItem("終了", new KeyCodeCombination(KeyCode.Q,
+                        KeyCombination.CONTROL_DOWN), () -> {
+                    Stage stage = (Stage) messageTable.getScene().getWindow();
+                    stage.close();
+                }));
+
+        Menu viewMenu = new Menu("表示");
+        viewMenu.getItems().add(createMenuItem("検索へ移動", new KeyCodeCombination(KeyCode.F,
+                KeyCombination.CONTROL_DOWN), () -> {
+            searchField.requestFocus();
+            searchField.selectAll();
+        }));
+
+        return new MenuBar(fileMenu, messageMenu, viewMenu);
+    }
+
+    private MenuItem createMenuItem(String text, KeyCombination accelerator, Runnable action) {
+        MenuItem item = new MenuItem(text);
+        item.setAccelerator(accelerator);
+        item.setOnAction(event -> action.run());
+        return item;
+    }
+
+    private ToolBar createToolBar() {
+        Button addButton = new Button("新規作成");
+        addButton.setOnAction(event -> showAddMessageDialog());
+        addButton.setTooltip(new Tooltip("新規作成 (Ctrl+N)"));
+
+        Button editButton = new Button("編集");
+        editButton.setOnAction(event -> showEditMessageDialog());
+        editButton.setTooltip(new Tooltip("編集 (Ctrl+E)"));
+
+        Button deleteButton = new Button("削除");
+        deleteButton.setOnAction(event -> deleteSelectedMessage());
+        deleteButton.setTooltip(new Tooltip("削除 (Delete)"));
+
+        Button refreshButton = new Button("更新");
+        refreshButton.setOnAction(event -> {
+            refreshMessageDisplay();
+            refreshMessageTable();
+        });
+        refreshButton.setTooltip(new Tooltip("更新 (F5)"));
+
+        Button importButton = new Button("インポート");
+        importButton.setOnAction(event -> importMessages());
+        importButton.setTooltip(new Tooltip("インポート (Ctrl+I)"));
+
+        Button exportButton = new Button("エクスポート");
+        exportButton.setOnAction(event -> exportMessages());
+        exportButton.setTooltip(new Tooltip("エクスポート (Ctrl+Shift+E)"));
+
+        ToolBar toolBar = new ToolBar(addButton, editButton, deleteButton, refreshButton,
+                new Separator(), importButton, exportButton);
+        toolBar.setAccessibleText("メッセージ操作ツールバー");
+        return toolBar;
     }
 
     private void importMessages() {
