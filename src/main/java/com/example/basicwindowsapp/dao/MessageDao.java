@@ -1,6 +1,7 @@
 package com.example.basicwindowsapp.dao;
 
 import com.example.basicwindowsapp.model.Message;
+import com.example.basicwindowsapp.validation.MessageValidator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * メッセージDAO（Data Access Object）クラス
@@ -22,6 +24,8 @@ import java.util.List;
  * @since 0.2.0
  */
 public class MessageDao {
+
+    private static final Logger LOGGER = Logger.getLogger(MessageDao.class.getName());
 
     /**
      * DatabaseManagerのインスタンス
@@ -48,12 +52,13 @@ public class MessageDao {
      * @throws SQLException データベース操作エラーが発生した場合
      */
     public int insertMessage(Message message) throws SQLException {
+        String text = MessageValidator.normalize(message.getText());
         String sql = "INSERT INTO messages (text, created_at) VALUES (?, ?)";
         
         try (Connection conn = dbManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             
-            pstmt.setString(1, message.getText());
+            pstmt.setString(1, text);
             pstmt.setLong(2, message.getCreatedAt());
             
             int affectedRows = pstmt.executeUpdate();
@@ -161,12 +166,13 @@ public class MessageDao {
      * @throws SQLException データベース操作エラーが発生した場合
      */
     public int updateMessage(Message message) throws SQLException {
+        String text = MessageValidator.normalize(message.getText());
         String sql = "UPDATE messages SET text = ? WHERE id = ?";
         
         try (Connection conn = dbManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            pstmt.setString(1, message.getText());
+            pstmt.setString(1, text);
             pstmt.setInt(2, message.getId());
             
             return pstmt.executeUpdate();
@@ -248,7 +254,7 @@ public class MessageDao {
             pstmt.executeUpdate();
         }
         
-        System.out.println("デフォルトメッセージを復旧しました: " + DEFAULT_MESSAGE);
+        LOGGER.info(() -> "デフォルトメッセージを復旧しました: " + DEFAULT_MESSAGE);
     }
     
     /**

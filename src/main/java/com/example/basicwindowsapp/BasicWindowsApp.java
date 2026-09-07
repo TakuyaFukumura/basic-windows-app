@@ -3,9 +3,11 @@ package com.example.basicwindowsapp;
 import com.example.basicwindowsapp.dao.DatabaseManager;
 import com.example.basicwindowsapp.dao.MessageDao;
 import com.example.basicwindowsapp.model.Message;
+import com.example.basicwindowsapp.validation.MessageValidator;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,7 +24,11 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.prefs.Preferences;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 基本的なJavaFXアプリケーションのメインクラス
@@ -52,6 +58,11 @@ import java.util.Optional;
  * @since 0.1.0
  */
 public class BasicWindowsApp extends Application {
+
+    private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
+    private static final String DARK_MODE_PREFERENCE = "darkMode";
+    private static final Preferences PREFERENCES =
+            Preferences.userNodeForPackage(BasicWindowsApp.class);
     
     /**
      * メッセージDAO
@@ -72,6 +83,10 @@ public class BasicWindowsApp extends Application {
      * メッセージ一覧データ
      */
     private ObservableList<Message> messageData;
+
+    private FilteredList<Message> filteredMessageData;
+
+    private TextField searchField;
 
     /**
      * ダークモードが有効かどうか
@@ -128,6 +143,7 @@ public class BasicWindowsApp extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
+        darkMode = PREFERENCES.getBoolean(DARK_MODE_PREFERENCE, false);
         // データベースの初期化
         initializeDatabase();
         
@@ -165,7 +181,7 @@ public class BasicWindowsApp extends Application {
     private void initializeDatabase() throws SQLException {
         DatabaseManager.getInstance().initializeDatabase();
         messageDao = new MessageDao();
-        System.out.println("データベースが初期化されました。");
+        LOGGER.info("データベースが初期化されました。");
     }
     
     /**
@@ -178,6 +194,7 @@ public class BasicWindowsApp extends Application {
         
         // メッセージデータの初期化
         messageData = FXCollections.observableArrayList();
+        filteredMessageData = new FilteredList<>(messageData);
         
         // メッセージテーブルの初期化
         messageTable = createMessageTable();
@@ -230,6 +247,7 @@ public class BasicWindowsApp extends Application {
         themeToggle.setSelected(darkMode);
         themeToggle.setOnAction(e -> {
             darkMode = themeToggle.isSelected();
+            PREFERENCES.putBoolean(DARK_MODE_PREFERENCE, darkMode);
             themeToggle.setText(darkMode ? "🌙" : "☀");
             themeToggle.getTooltip().setText(darkMode ? "ライトモードに切替" : "ダークモードに切替");
             applyTheme(root);
@@ -256,8 +274,17 @@ public class BasicWindowsApp extends Application {
         
         Label tableLabel = new Label("メッセージ一覧");
         tableLabel.getStyleClass().add("section-title");
+
+        searchField = new TextField();
+        searchField.setPromptText("メッセージを検索");
+        searchField.setAccessibleText("メッセージ検索");
+        searchField.textProperty().addListener((observable, oldValue, newValue) ->
+                filteredMessageData.setPredicate(message -> newValue == null
+                        || newValue.isBlank()
+                        || message.getText().toLowerCase(Locale.ROOT)
+                                .contains(newValue.trim().toLowerCase(Locale.ROOT))));
         
-        centerSection.getChildren().addAll(tableLabel, messageTable);
+        centerSection.getChildren().addAll(tableLabel, searchField, messageTable);
         
         return centerSection;
     }
@@ -300,7 +327,7 @@ public class BasicWindowsApp extends Application {
      */
     private TableView<Message> createMessageTable() {
         TableView<Message> table = new TableView<>();
-        table.setItems(messageData);
+        table.setItems(filteredMessageData);
         
         // ID列
         TableColumn<Message, Integer> idCol = new TableColumn<>("ID");
@@ -367,6 +394,7 @@ public class BasicWindowsApp extends Application {
                 mainMessageLabel.setText("メッセージがありません");
             }
         } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "メッセージの取得に失敗しました。", e);
             showErrorDialog("メッセージ取得エラー", "メッセージの取得に失敗しました: " + e.getMessage());
         }
     }
@@ -380,6 +408,7 @@ public class BasicWindowsApp extends Application {
             messageData.clear();
             messageData.addAll(messages);
         } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "メッセージ一覧の取得に失敗しました。", e);
             showErrorDialog("データ取得エラー", "メッセージ一覧の取得に失敗しました: " + e.getMessage());
         }
     }
@@ -396,16 +425,18 @@ public class BasicWindowsApp extends Application {
         
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
-            if (!text.trim().isEmpty()) {
-                try {
-                    Message newMessage = new Message(text.trim(), System.currentTimeMillis());
-                    messageDao.insertMessage(newMessage);
-                    refreshMessageDisplay();
-                    refreshMessageTable();
-                    showInfoDialog("成功", "メッセージが追加されました。");
-                } catch (SQLException e) {
-                    showErrorDialog("追加エラー", "メッセージの追加に失敗しました: " + e.getMessage());
-                }
+            try {
+                String normalizedText = MessageValidator.normalize(text);
+                Message newMessage = new Message(normalizedText, System.currentTimeMillis());
+                messageDao.insertMessage(newMessage);
+                refreshMessageDisplay();
+                refreshMessageTable();
+                showInfoDialog("成功", "メッセージが追加されました。");
+            } catch (IllegalArgumentException e) {
+                showWarningDialog("入力エラー", e.getMessage());
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "メッセージの追加に失敗しました。", e);
+                showErrorDialog("追加エラー", "メッセージの追加に失敗しました: " + e.getMessage());
             }
         });
     }
@@ -428,16 +459,17 @@ public class BasicWindowsApp extends Application {
         
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
-            if (!text.trim().isEmpty()) {
-                try {
-                    selectedMessage.setText(text.trim());
-                    messageDao.updateMessage(selectedMessage);
-                    refreshMessageDisplay();
-                    refreshMessageTable();
-                    showInfoDialog("成功", "メッセージが更新されました。");
-                } catch (SQLException e) {
-                    showErrorDialog("更新エラー", "メッセージの更新に失敗しました: " + e.getMessage());
-                }
+            try {
+                selectedMessage.setText(MessageValidator.normalize(text));
+                messageDao.updateMessage(selectedMessage);
+                refreshMessageDisplay();
+                refreshMessageTable();
+                showInfoDialog("成功", "メッセージが更新されました。");
+            } catch (IllegalArgumentException e) {
+                showWarningDialog("入力エラー", e.getMessage());
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "メッセージの更新に失敗しました。", e);
+                showErrorDialog("更新エラー", "メッセージの更新に失敗しました: " + e.getMessage());
             }
         });
     }
@@ -466,6 +498,7 @@ public class BasicWindowsApp extends Application {
                 refreshMessageTable();
                 showInfoDialog("成功", "メッセージが削除されました。");
             } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "メッセージの削除に失敗しました。", e);
                 showErrorDialog("削除エラー", "メッセージの削除に失敗しました: " + e.getMessage());
             }
         }

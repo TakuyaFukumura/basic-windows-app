@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Logger;
 
 /**
  * データベース接続・管理クラス
@@ -21,6 +22,8 @@ import java.sql.Statement;
  * @since 0.2.0
  */
 public class DatabaseManager {
+
+    private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
     
     /**
      * データベースファイル名
@@ -120,7 +123,7 @@ public class DatabaseManager {
             pstmt.executeUpdate();
         }
         
-        System.out.println("デフォルトメッセージを挿入しました: Hello World");
+        LOGGER.info("デフォルトメッセージを挿入しました: Hello World");
     }
     
     /**
