@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.DriverManager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -18,13 +19,22 @@ class BackupServiceTest {
             Path archive = directory.resolve("backup.bwa");
             Path restoredDatabase = directory.resolve("restored.db");
             Path restoredSettings = directory.resolve("restored.properties");
-            Files.writeString(database, "database");
+            try (var connection = DriverManager.getConnection("jdbc:sqlite:" + database);
+                 var statement = connection.createStatement()) {
+                statement.execute("CREATE TABLE messages (id INTEGER PRIMARY KEY, text TEXT NOT NULL, created_at INTEGER NOT NULL)");
+                statement.execute("INSERT INTO messages VALUES (1, 'database', 123)");
+            }
             Files.writeString(settings, "darkMode=true");
 
             BackupService.createBackup(archive, database, settings);
             BackupService.restoreBackup(archive, restoredDatabase, restoredSettings);
 
-            assertEquals("database", Files.readString(restoredDatabase));
+            try (var connection = DriverManager.getConnection("jdbc:sqlite:" + restoredDatabase);
+                 var statement = connection.createStatement();
+                 var result = statement.executeQuery("SELECT text FROM messages")) {
+                result.next();
+                assertEquals("database", result.getString(1));
+            }
             assertEquals("darkMode=true", Files.readString(restoredSettings));
         } finally {
             try (var files = Files.walk(directory)) {

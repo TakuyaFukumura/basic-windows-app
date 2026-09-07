@@ -54,7 +54,7 @@ java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxm
 # JARを作成
 mvn clean package
 
-# JAR場所: target/basic-windows-app-0.1.0.jar
+# JAR場所: target/basic-windows-app-0.14.0.jar
 # 注意: 標準JARにはメインマニフェスト属性がありません - mvn javafx:runを使用してください
 ```
 
@@ -81,8 +81,9 @@ mvn clean package
    - テキストが適切に中央配置され、スタイルが適用されていることを確認
    - ウィンドウクローズ機能をテスト
 
-### テストは利用不可
-このプロジェクトには現在ユニットテストがありません。`mvn test`フェーズは実行されますが「No tests to run.」と報告されます。
+### テスト
+JUnit 5による設定、バックアップ、ファイル入出力、入力検証のヘッドレステストがあります。
+`mvn clean install`でコンパイルとテストを実行してください。
 
 ### リンター/フォーマットツールなし
 Mavenフォーマットやリンタープラグインは現在設定されていません。標準的なMavenコンパイル警告のみがコード品質チェックとして利用可能です。
@@ -110,11 +111,11 @@ basic-windows-app/
 - **BasicWindowsApp.java**: Applicationを継承するメインJavaFXアプリケーションクラス
 - **pom.xml**: Java 24、JavaFX 26.0.2依存関係を含むMavenビルド設定
 - **README.md**: 包括的な日本語ドキュメント
-- **docs/DESIGN.md**: UI仕様と技術要件
+- **docs/改善点.md**: 改善候補と対応状況
 
 ### 依存関係
-- **JavaFX Controls**（バージョン21）: コアJavaFX UIコンポーネント
-- **JavaFX FXML**（バージョン21）: FXMLマークアップサポート（現在未使用）
+- **JavaFX Controls**（バージョン26.0.2）: コアJavaFX UIコンポーネント
+- **JavaFX FXML**（バージョン26.0.2）: FXMLマークアップサポート（現在未使用）
 
 ## 一般的な開発タスク
 
@@ -148,10 +149,9 @@ JavaFXランタイムエラーが発生した場合：
 **Mavenビルドを絶対にキャンセルしないこと**: 高速ビルドでも、ネットワークの問題やシステム負荷により時間がかかることがあります。
 
 ## CI/ビルドパイプラインの注意事項
-- 現在GitHub Actionsワークフローは存在しません
+- GitHub Actionsはpushとpull requestで、Ubuntu・Windows・macOSのビルドとテストを実行します
 - JavaFXアプリケーションはディスプレイ設定なしの標準CI環境では実行できません
-- ビルド検証には`mvn clean install`のみを使用
-- CIで`mvn javafx:run`を試行しないでください - 常に失敗します
+- CIでは`mvnw clean verify`を使用し、`javafx:run`は実行しないでください
 
 ## 開発環境セットアップ
 新しい開発者向け：

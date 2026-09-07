@@ -68,6 +68,43 @@ public class MessageDao {
                     throw new SQLException("メッセージの挿入に失敗しました。IDが生成されませんでした。");
                 }
             }
+
+        }
+    }
+
+    /**
+     * メッセージを1つのトランザクションでまとめて挿入します。
+     *
+     * @param messages 挿入するメッセージ
+     * @return 挿入件数
+     * @throws SQLException データベース操作エラーが発生した場合
+     */
+    public int insertMessages(List<Message> messages) throws SQLException {
+        String sql = "INSERT INTO messages (text, created_at) VALUES (?, ?)";
+
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            conn.setAutoCommit(false);
+            try {
+                for (int i = 0; i < messages.size(); i++) {
+                    Message message = messages.get(i);
+                    try {
+                        pstmt.setString(1, MessageValidator.normalize(message.getText()));
+                        pstmt.setLong(2, message.getCreatedAt());
+                        pstmt.executeUpdate();
+                    } catch (RuntimeException | SQLException e) {
+                        conn.rollback();
+                        throw new SQLException("インポートの" + (i + 1) + "件目に失敗しました。", e);
+                    }
+                }
+                conn.commit();
+                return messages.size();
+            } catch (SQLException e) {
+                if (!conn.isClosed()) {
+                    conn.rollback();
+                }
+                throw e;
+            }
         }
     }
 

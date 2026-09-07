@@ -68,7 +68,7 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
-    private static final String APP_VERSION = "0.13.0";
+    private static final String APP_VERSION = "0.14.0";
     /**
      * アプリケーション共通のスタイルシート
      */
@@ -505,10 +505,7 @@ public class BasicWindowsApp extends Application {
             protected Integer call() throws IOException, SQLException {
                 MessageFileService.Format format = getFileFormat(path);
                 List<Message> messages = MessageFileService.read(path, format);
-                for (Message message : messages) {
-                    messageDao.insertMessage(message);
-                }
-                return messages.size();
+                return messageDao.insertMessages(messages);
             }
         };
         executeIoTask(task, count -> {
