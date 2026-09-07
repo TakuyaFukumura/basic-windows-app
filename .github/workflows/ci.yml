@@ -20,26 +20,11 @@ jobs:
         with:
           java-version: '24'
           distribution: 'temurin'
-
-      # Mavenの依存関係をキャッシュ
-      - name: Mavenキャッシュの設定
-        uses: actions/cache@v5
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          cache: maven
       
-      # プロジェクトのコンパイル
-      - name: プロジェクトのコンパイル
-        run: ./mvnw clean compile
-
-      # テストの実行
-      - name: テストの実行
-        run: ./mvnw test
-
-      # JARファイルの作成
-      - name: JARファイルの作成
-        run: ./mvnw package
+      # ビルド、テスト、パッケージの検証
+      - name: ビルドとテスト
+        run: ./mvnw -B clean verify
   
   # クロスプラットフォームテスト
   cross-platform-test:
@@ -62,7 +47,8 @@ jobs:
         with:
           java-version: '24'
           distribution: 'temurin'
+          cache: maven
 
-      # 基本的なビルドテスト
-      - name: 基本ビルドテスト（${{ matrix.os }}）
-        run: ${{ matrix.maven-command }} clean compile
+      # ビルドとテスト
+      - name: ビルドとテスト（${{ matrix.os }}）
+        run: ${{ matrix.maven-command }} -B clean verify
