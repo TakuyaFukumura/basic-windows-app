@@ -240,11 +240,10 @@ public class BasicWindowsApp extends Application {
         });
         
         MenuBar menuBar = createMenuBar();
-        ToolBar toolBar = createToolBar();
 
         // 上部：メインメッセージ表示エリア
         VBox topSection = createTopSection(root);
-        root.setTop(new VBox(menuBar, toolBar, topSection));
+        root.setTop(new VBox(menuBar, topSection));
         
         // 中央：メッセージ一覧テーブル
         VBox centerSection = createCenterSection();
@@ -412,31 +411,6 @@ public class BasicWindowsApp extends Application {
         item.setAccelerator(accelerator);
         item.setOnAction(event -> action.run());
         return item;
-    }
-
-    private ToolBar createToolBar() {
-        Button addButton = new Button("新規作成");
-        addButton.setOnAction(event -> showAddMessageDialog());
-        addButton.setTooltip(new Tooltip("新規作成 (Ctrl+N)"));
-
-        Button editButton = new Button("編集");
-        editButton.setOnAction(event -> showEditMessageDialog());
-        editButton.setTooltip(new Tooltip("編集 (Ctrl+E)"));
-
-        Button deleteButton = new Button("削除");
-        deleteButton.setOnAction(event -> deleteSelectedMessage());
-        deleteButton.setTooltip(new Tooltip("削除 (Delete)"));
-
-        Button refreshButton = new Button("更新");
-        refreshButton.setOnAction(event -> {
-            refreshMessageDisplay();
-            refreshMessageTable();
-        });
-        refreshButton.setTooltip(new Tooltip("更新 (F5)"));
-
-        ToolBar toolBar = new ToolBar(addButton, editButton, deleteButton, refreshButton);
-        toolBar.setAccessibleText("メッセージ操作ツールバー");
-        return toolBar;
     }
 
     private void importMessages() {
