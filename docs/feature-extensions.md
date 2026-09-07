@@ -1,314 +1,149 @@
-# テンプレートリポジトリ機能拡張案
-
-## 概要
-
-本文書は、`basic-windows-app` テンプレートリポジトリが今後提供すべき機能の拡張案をまとめたものです。現在のシンプルな「Hello World」アプリケーションから、実用的なWindowsアプリケーション開発のベースとなるよう、段階的に機能を追加していくことを提案します。
-
-## 現状分析
-
-### 現在の機能
-- JavaFX基本アプリケーション構造
-- Maven ビルドシステム
-- シンプルなGUI（Hello Worldラベル）
-- 日本語コメント・ドキュメント
-
-### 現在の課題
-- 基本的すぎて実際のアプリ開発のサンプルとして不十分
-- UI コンポーネントのサンプルが少ない
-- データ処理、ファイル操作などの実用的な機能がない
-- アプリケーション設定、国際化対応などが未対応
-
-## 提案する機能拡張
-
-### Phase 1: 基本UI・UXコンポーネント（優先度：高）
-
-#### 1.1 メニューバー・ツールバー
-**目的**: 標準的なWindows アプリケーションの基本構造を提供
-
-**内容**:
-- ファイル、編集、表示、ヘルプメニュー
-- よく使用されるアクションのツールバー
-- キーボードショートカット対応
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/ui/MenuBarController.java`
-- `src/main/resources/fxml/menubar.fxml`
-
-#### 1.2 ダイアログ・ポップアップ
-**目的**: ユーザーとの対話的な操作のサンプル提供
-
-**内容**:
-- 情報表示ダイアログ
-- 確認ダイアログ
-- 入力ダイアログ
-- ファイル選択ダイアログ
-- カスタムダイアログ
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/ui/DialogUtils.java`
-- `src/main/resources/fxml/custom-dialog.fxml`
-
-#### 1.3 タブ・ペイン機能
-**目的**: 複数画面・機能を持つアプリケーションのサンプル
-
-**内容**:
-- TabPane を使用した複数タブ
-- 動的タブ追加・削除
-- タブ間のデータ共有
-- タブ状態の保存・復元
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/ui/TabController.java`
-- `src/main/resources/fxml/main-tabs.fxml`
-
-### Phase 2: データ処理・永続化（優先度：高）
-
-#### 2.1 ファイル操作機能
-**目的**: ファイルの読み込み・保存・処理のサンプル
-
-**内容**:
-- テキストファイル読み込み・保存
-- CSV ファイル処理
-- 設定ファイル（JSON/Properties）の管理
-- ドラッグ&ドロップ対応
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/service/FileService.java`
-- `src/main/java/com/example/basicwindowsapp/model/FileProcessor.java`
-
-#### 2.2 設定管理システム
-**目的**: アプリケーション設定の永続化
-
-**内容**:
-- ユーザー設定の保存・読み込み
-- 設定画面UI
-- デフォルト設定の管理
-- 設定のインポート・エクスポート
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/config/AppConfig.java`
-- `src/main/java/com/example/basicwindowsapp/ui/SettingsController.java`
-- `src/main/resources/fxml/settings.fxml`
-
-#### 2.3 データベース連携
-**目的**: ローカルデータベースとの連携サンプル
-
-**内容**:
-- SQLite データベース接続
-- 基本的なCRUD操作
-- データの表示（TableView）
-- データの検索・フィルタリング
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/dao/DatabaseManager.java`
-- `src/main/java/com/example/basicwindowsapp/model/DataEntity.java`
-
-### Phase 3: 高度なUI・機能（優先度：中）
-
-#### 3.1 チャート・グラフ機能
-**目的**: データ可視化のサンプル
-
-**内容**:
-- 棒グラフ、折れ線グラフ、円グラフ
-- リアルタイムデータ更新
-- グラフのカスタマイズ
-- 画像エクスポート機能
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/ui/ChartController.java`
-- 依存関係: `javafx-controls` のChartライブラリ
-
-#### 3.2 テーブル・リスト表示
-**目的**: データ一覧表示と操作のサンプル
-
-**内容**:
-- TableView を使用したデータ表示
-- ソート・フィルタリング機能
-- 行選択・複数選択
-- 行の追加・編集・削除
-- CSV エクスポート
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/ui/TableController.java`
-- `src/main/java/com/example/basicwindowsapp/model/TableData.java`
-
-#### 3.3 プリント・エクスポート機能
-**目的**: 印刷とファイルエクスポートのサンプル
-
-**内容**:
-- ページ印刷機能
-- PDF エクスポート
-- 画像ファイル保存
-- 印刷プレビュー
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/service/PrintService.java`
-- 依存関係: iText PDF ライブラリ
-
-### Phase 4: システム連携・国際化（優先度：中）
-
-#### 4.1 国際化（i18n）対応
-**目的**: 多言語対応アプリケーションのサンプル
-
-**内容**:
-- リソースバンドルの管理
-- 言語切り替え機能
-- 日本語・英語対応
-- 動的言語切り替え
-
-**実装ファイル**:
-- `src/main/resources/i18n/messages_ja.properties`
-- `src/main/resources/i18n/messages_en.properties`
-- `src/main/java/com/example/basicwindowsapp/i18n/MessageManager.java`
-
-#### 4.2 ログ機能
-**目的**: アプリケーションのログ管理
-
-**内容**:
-- SLF4J + Logback設定
-- レベル別ログ出力
-- ファイルローテーション
-- ログビューア機能
-
-**実装ファイル**:
-- `src/main/resources/logback.xml`
-- `src/main/java/com/example/basicwindowsapp/ui/LogViewerController.java`
-
-#### 4.3 バックグラウンドタスク
-**目的**: 長時間処理とUIの応答性確保
-
-**内容**:
-- JavaFX Task を使用した非同期処理
-- プログレスバー表示
-- タスクの開始・停止・キャンセル
-- 複数タスクの管理
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/task/BackgroundTaskManager.java`
-- `src/main/java/com/example/basicwindowsapp/ui/ProgressController.java`
-
-### Phase 5: 拡張・配布機能（優先度：低）
-
-#### 5.1 テーマ・スタイル機能
-**目的**: アプリケーションの外観カスタマイズ
-
-**内容**:
-- CSS テーマシステム
-- ダーク・ライトテーマ
-- カスタムスタイル作成
-- テーマの動的切り替え
-
-**実装ファイル**:
-- `src/main/resources/css/light-theme.css`
-- `src/main/resources/css/dark-theme.css`
-- `src/main/java/com/example/basicwindowsapp/ui/ThemeManager.java`
-
-#### 5.2 アップデート機能
-**目的**: アプリケーションの自動更新
-
-**内容**:
-- バージョンチェック機能
-- アップデートダウンロード
-- 自動インストール
-- ロールバック機能
-
-**実装ファイル**:
-- `src/main/java/com/example/basicwindowsapp/update/UpdateManager.java`
-
-#### 5.3 インストーラー作成
-**目的**: 配布用インストーラーの生成
-
-**内容**:
-- jpackage を使用したインストーラー作成
-- Windows MSI パッケージ
-- アンインストーラー
-- スタートメニュー登録
-
-**実装ファイル**:
-- Maven jpackage プラグイン設定
-- インストーラー用リソース
-
-## 実装スケジュール案
-
-### Phase 1 (1-2ヶ月)
-基本UI・UXコンポーネントの実装により、標準的なWindowsアプリケーションの骨格を提供
-
-### Phase 2 (2-3ヶ月)
-データ処理・永続化機能の追加により、実用的なアプリケーション開発が可能
-
-### Phase 3 (3-4ヶ月)
-高度なUI機能追加により、本格的なビジネスアプリケーション開発をサポート
-
-### Phase 4 (4-5ヶ月)
-システム連携・国際化により、エンタープライズレベルの機能を提供
-
-### Phase 5 (5-6ヶ月)
-配布・運用面での機能追加により、商用アプリケーション開発を完全サポート
-
-## 技術要件
-
-### 追加予定の依存関係
-```xml
-<!-- データベース -->
-<dependency>
-    <groupId>org.xerial</groupId>
-    <artifactId>sqlite-jdbc</artifactId>
-    <version>3.42.0.0</version>
-</dependency>
-
-<!-- ログ管理 -->
-<dependency>
-    <groupId>ch.qos.logback</groupId>
-    <artifactId>logback-classic</artifactId>
-    <version>1.4.11</version>
-</dependency>
-
-<!-- JSON処理 -->
-<dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.15.2</version>
-</dependency>
-
-<!-- PDF生成 -->
-<dependency>
-    <groupId>com.itextpdf</groupId>
-    <artifactId>itext7-core</artifactId>
-    <version>7.2.5</version>
-</dependency>
+# 機能拡張ロードマップ
+
+## 目的
+
+`basic-windows-app` は、JavaFX と SQLite を使った Windows デスクトップアプリケーションのテンプレートです。
+本書では、現在の実装を基準に、テンプレートとしての再利用性を高めるための次の拡張を整理します。
+
+ここに記載する内容は確定した実装計画ではなく、優先順位を付けるための候補です。実装時は、既存の
+シンプルさ、Windows 以外でもビルドできること、依存関係を増やしすぎないことを優先します。
+
+## 現在の実装
+
+### 提供済みの機能
+
+- Java 24 と Maven を利用した JavaFX アプリケーション
+- JavaFX Controls と FXML の依存関係
+- SQLite によるローカルデータ永続化
+- `messages` テーブルを対象としたメッセージの登録・取得・更新・削除
+- `TableView` による ID、メッセージ本文、作成日時の一覧表示
+- 起動時のデータベース・テーブル初期化
+- データが空になった場合の `Hello World` メッセージ自動復旧
+- 空白だけのメッセージを登録・更新しない入力検証
+- 情報、警告、確認、入力用ダイアログ
+- ライトモード／ダークモードの切替（メイン画面とダイアログ）
+- Maven Wrapper による再現性のあるビルド
+- GitHub Actions による Ubuntu・Windows・macOS のビルド確認
+- `jpackage` プロファイルによるアプリケーションイメージ作成
+
+### 現在の構成
+
+```text
+src/main/
+├── java/com/example/basicwindowsapp/
+│   ├── BasicWindowsApp.java       # JavaFX UI とイベント処理
+│   ├── model/Message.java         # メッセージモデル
+│   └── dao/
+│       ├── DatabaseManager.java   # SQLite 接続と初期化
+│       └── MessageDao.java        # メッセージ CRUD
+└── resources/
+    └── styles.css                 # ライト／ダークテーマ
 ```
 
-### プロジェクト構造の更新
-```
-src/
-├── main/
-│   ├── java/com/example/basicwindowsapp/
-│   │   ├── config/          # 設定管理
-│   │   ├── dao/             # データアクセス
-│   │   ├── i18n/            # 国際化
-│   │   ├── model/           # データモデル
-│   │   ├── service/         # ビジネスロジック
-│   │   ├── task/            # バックグラウンドタスク
-│   │   ├── ui/              # UIコントローラー
-│   │   ├── update/          # アップデート機能
-│   │   └── BasicWindowsApp.java
-│   └── resources/
-│       ├── css/             # スタイルシート
-│       ├── fxml/            # FXML ファイル
-│       ├── i18n/            # 国際化リソース
-│       ├── images/          # 画像リソース
-│       └── logback.xml      # ログ設定
-└── test/                    # テストコード
+アプリケーションデータは、実行ディレクトリではなくユーザーのホームディレクトリ配下の
+`.basic-windows-app\basicwindowsapp.db` に保存されます。アプリケーションの削除や再インストール後も
+データを残したい場合は、この保存先を仕様として明示し、バックアップ・削除方法も案内する必要があります。
+
+### ビルドと配布の現状
+
+```text
+mvnw.cmd clean install              # Windows の完全ビルド
+mvnw.cmd javafx:run                 # GUI を起動
+mvnw.cmd clean package -Pjpackage   # Windows アプリケーションイメージ
 ```
 
-## 期待される効果
+CI では `clean compile`、`test`、`package` を実行します。現時点で自動テストクラスはないため、
+`test` はビルドに含まれる検証フェーズとして実行されます。`javafx:run` はディスプレイが必要なので
+CI では実行しません。
 
-1. **学習効果**: JavaFX の様々な機能を体系的に学習できる
-2. **開発効率**: 新規プロジェクトの開発速度向上
-3. **品質向上**: ベストプラクティスを組み込んだコード構造
-4. **保守性**: 拡張しやすい設計パターンの提供
-5. **国際化**: グローバル展開を考慮したアプリケーション構造
+## 拡張方針
 
-## まとめ
+### 優先度 1: 基盤の品質と使いやすさ
 
-本提案により、現在のシンプルな「Hello World」アプリケーションから、実用的なWindowsアプリケーション開発のためのテンプレートリポジトリへと発展させることができます。段階的な実装により、学習曲線を緩やかにしつつ、最終的には商用レベルのアプリケーション開発をサポートできる充実したテンプレートとなることが期待されます。
+まず、現在の CRUD サンプルを安全に拡張できる状態にします。
+
+- DAO と JavaFX UI の責務を分離し、画面クラスの肥大化を抑える
+- SQLite の初期化・接続・マイグレーション方針を文書化する
+- DAO と入力検証を対象に、ヘッドレスで実行できる単体テストを追加する
+- データベース障害や不正な入力を、ログと画面メッセージで一貫して通知する
+- メッセージの検索・並べ替え・ページングなど、一覧操作を改善する
+- テーマ切替状態の保存と、アクセシビリティ用のキーボード操作を検討する
+
+### 優先度 2: ファイルと設定の取り扱い
+
+デスクトップアプリケーションで頻出する入出力の例を、既存のメッセージ管理と整合する形で追加します。
+
+- テキストまたは CSV のインポート・エクスポート
+- ファイル選択、ドラッグ＆ドロップ、上書き確認
+- アプリケーション設定（テーマ、表示設定、データ保存先）の保存と復元
+- 設定ファイルの形式・保存場所・互換性を定義
+- 入出力処理を `Task` で実行し、処理中も UI を応答可能に保つ
+
+外部ライブラリを追加する場合は、用途、ライセンス、保守状況、Windows 配布時の影響を確認してから
+採用します。JSON や PDF などのライブラリは、必要性が明確になった機能の実装時に追加します。
+
+### 優先度 3: UI コンポーネントのサンプル
+
+テンプレートとしての学習価値を高めるため、実際のユースケースに必要なものから追加します。
+
+- `MenuBar`、ツールバー、キーボードショートカット
+- `TabPane` による複数画面
+- `TableView` の編集、複数選択、フィルター、CSV 出力
+- `Chart` による基本的なデータ可視化
+- ユーザー向けエラー表示、ステータス表示、進捗表示
+
+FXML を導入する場合は、画面・コントローラー・モデルの責務と、プログラムによる UI 構築との使い分けを
+先に決めます。小さな画面まで一律に FXML 化することは避けます。
+
+### 優先度 4: 国際化と運用
+
+基本機能が安定した後に、配布・運用を見据えた機能を追加します。
+
+- `ResourceBundle` による日本語・英語のメッセージ管理
+- SLF4J などを用いたログ出力とローテーション
+- バージョン情報、診断情報、ログ保存場所の表示
+- アプリケーション設定とユーザーデータのバックアップ／復元
+- Windows 向けインストーラー（MSI）とショートカット設定
+- 更新通知と更新手順の提供
+
+自動更新は、署名、配布元の信頼性、失敗時の復旧方法を含めて設計できる段階になってから検討します。
+単にダウンロードして置き換えるだけの更新機能は採用しません。
+
+## 実装時の受け入れ基準
+
+新しい機能を追加する際は、少なくとも次を満たします。
+
+1. 既存の `mvnw.cmd clean install` が成功すること。
+2. UI に依存しないロジックには自動テストを追加すること。
+3. Windows で `mvnw.cmd javafx:run` を実行したとき、既存のメッセージ管理が使えること。
+4. 既存データを破壊せず、データ形式を変更する場合は移行手順を用意すること。
+5. 追加した依存関係、保存先、権限、ライセンスを README または関連ドキュメントに記載すること。
+6. CI で確認できない GUI 操作は、手動確認手順をドキュメント化すること。
+
+## 対象外とすること
+
+テンプレートの目的から、次の機能は当面の標準機能には含めません。
+
+- サーバー、クラウドデータベース、ユーザー認証
+- 特定の業務ドメインに依存する画面やデータモデル
+- 複数の UI フレームワークの同時採用
+- 要件がない状態での大規模な依存関係追加
+- CI 上での GUI 起動テスト
+
+これらが必要なアプリケーションでは、本テンプレートを基に要件に合わせて構成を分岐させます。
+
+## 変更時に確認するファイル
+
+機能拡張の内容に応じて、次のファイルを同時に確認・更新します。
+
+- `src/main/java/com/example/basicwindowsapp/BasicWindowsApp.java`
+- `src/main/java/com/example/basicwindowsapp/model/`
+- `src/main/java/com/example/basicwindowsapp/dao/`
+- `src/main/resources/`
+- `pom.xml`
+- `README.md`
+- `docs/DESIGN.md`
+- `.github/workflows/ci.yml`
+
+実装されていないクラス名やリソースパスを、あらかじめ「実装ファイル」として記載することは避けます。
+実際の変更が発生した時点で構成図とドキュメントを更新し、常にリポジトリの状態と一致させます。
