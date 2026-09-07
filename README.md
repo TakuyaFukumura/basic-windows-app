@@ -266,7 +266,7 @@ Maven設定ファイルです。以下の設定が含まれています：
 
 - **Java 24対応**: JavaFX 26.0.2を使用可能
 - **JavaFX依存関係**: JavaFX ControlsとFXMLライブラリ
-- **SQLite JDBC**: SQLite 3.42.0.0によるローカルデータ永続化
+- **SQLite JDBC**: SQLite 3.53.4.0によるローカルデータ永続化
 - **プラグイン設定**: コンパイルと実行用の設定
 
 ## 開発ガイド
