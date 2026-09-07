@@ -141,6 +141,8 @@ public class DatabaseManager {
             Files.deleteIfExists(getDatabasePath());
             return true;
         } catch (IOException e) {
+            LOGGER.log(java.util.logging.Level.WARNING,
+                    "データベースの削除に失敗しました: " + getDatabasePath(), e);
             return false;
         }
     }

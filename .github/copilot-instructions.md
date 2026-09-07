@@ -46,7 +46,7 @@ mvn javafx:run
 mvn clean compile
 
 # JavaFXモジュールを指定して実行（別途JavaFX SDKのインストールが必要）
-java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp target/classes com.example.basicwindowsapp.BasicWindowsApp
+java --module-path "path/to/javafx/lib" --add-modules javafx.controls -cp target/classes com.example.basicwindowsapp.BasicWindowsApp
 ```
 
 #### 方法3: JAR実行
@@ -54,7 +54,7 @@ java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxm
 # JARを作成
 mvn clean package
 
-# JAR場所: target/basic-windows-app-0.15.0.jar
+# JAR場所: target/basic-windows-app-0.16.0.jar
 # 注意: 標準JARにはメインマニフェスト属性がありません - mvn javafx:runを使用してください
 ```
 

@@ -112,7 +112,7 @@ mvn clean compile
 次に、JavaFXモジュールを指定してアプリケーションを実行します：
 
 ```bash
-java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp "target/classes:path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
+java --module-path "path/to/javafx/lib" --add-modules javafx.controls -cp "target/classes:path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
 ```
 
 **注意**: `path/to/javafx/lib`はJavaFX SDKのライブラリパス、
@@ -121,7 +121,7 @@ Windowsではクラスパスの区切り文字に`;`を使用し、macOS/Linux�
 例えばWindowsでは次のように実行します：
 
 ```cmd
-java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxml -cp "target/classes;path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
+java --module-path "path/to/javafx/lib" --add-modules javafx.controls -cp "target/classes;path/to/sqlite-jdbc.jar" com.example.basicwindowsapp.BasicWindowsApp
 ```
 
 ### 方法3: JARファイルの作成
@@ -265,7 +265,7 @@ CREATE TABLE messages (
 Maven設定ファイルです。以下の設定が含まれています：
 
 - **Java 24対応**: JavaFX 26.0.2を使用可能
-- **JavaFX依存関係**: JavaFX ControlsとFXMLライブラリ
+- **JavaFX依存関係**: JavaFX Controlsライブラリ
 - **SQLite JDBC**: SQLite 3.53.4.0によるローカルデータ永続化
 - **プラグイン設定**: コンパイルと実行用の設定
 
