@@ -1,6 +1,9 @@
 package com.example.basicwindowsapp.dao;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -25,9 +28,10 @@ public class DatabaseManager {
     private static final String DB_NAME = "basicwindowsapp.db";
     
     /**
-     * データベースURL
+     * ユーザーごとのアプリケーションデータディレクトリ
      */
-    private static final String DB_URL = "jdbc:sqlite:" + DB_NAME;
+    private static final Path DATA_DIRECTORY = Paths.get(
+            System.getProperty("user.home"), ".basic-windows-app");
     
     /**
      * シングルトンインスタンス
@@ -59,7 +63,12 @@ public class DatabaseManager {
      * @throws SQLException データベース接続エラーが発生した場合
      */
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+        try {
+            Files.createDirectories(DATA_DIRECTORY);
+            return DriverManager.getConnection("jdbc:sqlite:" + getDatabasePath());
+        } catch (IOException e) {
+            throw new SQLException("データベース保存先を作成できませんでした", e);
+        }
     }
     
     /**
@@ -120,8 +129,7 @@ public class DatabaseManager {
      * @return データベースファイルが存在する場合true
      */
     public boolean databaseExists() {
-        File dbFile = new File(DB_NAME);
-        return dbFile.exists();
+        return Files.exists(getDatabasePath());
     }
     
     /**
@@ -130,10 +138,20 @@ public class DatabaseManager {
      * @return 削除に成功した場合true
      */
     public boolean deleteDatabase() {
-        File dbFile = new File(DB_NAME);
-        if (dbFile.exists()) {
-            return dbFile.delete();
+        try {
+            Files.deleteIfExists(getDatabasePath());
+            return true;
+        } catch (IOException e) {
+            return false;
         }
-        return true;
+    }
+
+    /**
+     * データベースファイルの保存先を取得します。
+     *
+     * @return データベースファイルのパス
+     */
+    private Path getDatabasePath() {
+        return DATA_DIRECTORY.resolve(DB_NAME);
     }
 }
