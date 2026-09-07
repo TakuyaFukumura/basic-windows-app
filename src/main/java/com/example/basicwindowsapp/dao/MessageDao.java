@@ -183,18 +183,24 @@ public class MessageDao {
     public int deleteMessage(int id) throws SQLException {
         String sql = "DELETE FROM messages WHERE id = ?";
         
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dbManager.getConnection()) {
+            conn.setAutoCommit(false);
             
-            pstmt.setInt(1, id);
-            int deletedRows = pstmt.executeUpdate();
-            
-            // 全てのメッセージが削除された場合、デフォルトメッセージを追加
-            if (deletedRows > 0 && getMessageCount() == 0) {
-                insertDefaultMessage();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, id);
+                int deletedRows = pstmt.executeUpdate();
+                
+                // 全てのメッセージが削除された場合、デフォルトメッセージを追加
+                if (deletedRows > 0 && getMessageCount(conn) == 0) {
+                    insertDefaultMessage(conn);
+                }
+                
+                conn.commit();
+                return deletedRows;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
             }
-            
-            return deletedRows;
         }
     }
     
@@ -207,17 +213,23 @@ public class MessageDao {
     public int deleteAllMessages() throws SQLException {
         String sql = "DELETE FROM messages";
         
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = dbManager.getConnection()) {
+            conn.setAutoCommit(false);
             
-            int deletedRows = pstmt.executeUpdate();
-            
-            // 削除後にデフォルトメッセージを追加
-            if (deletedRows > 0) {
-                insertDefaultMessage();
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                int deletedRows = pstmt.executeUpdate();
+                
+                // 削除後にデフォルトメッセージを追加
+                if (deletedRows > 0) {
+                    insertDefaultMessage(conn);
+                }
+                
+                conn.commit();
+                return deletedRows;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
             }
-            
-            return deletedRows;
         }
     }
     
@@ -226,9 +238,16 @@ public class MessageDao {
      * 
      * @throws SQLException データベース操作エラーが発生した場合
      */
-    private void insertDefaultMessage() throws SQLException {
+    private void insertDefaultMessage(Connection conn) throws SQLException {
         Message defaultMessage = new Message(DEFAULT_MESSAGE, System.currentTimeMillis());
-        insertMessage(defaultMessage);
+        String sql = "INSERT INTO messages (text, created_at) VALUES (?, ?)";
+        
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, defaultMessage.getText());
+            pstmt.setLong(2, defaultMessage.getCreatedAt());
+            pstmt.executeUpdate();
+        }
+        
         System.out.println("デフォルトメッセージを復旧しました: " + DEFAULT_MESSAGE);
     }
     
@@ -244,12 +263,37 @@ public class MessageDao {
         try (Connection conn = dbManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
-            
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
+            return getMessageCount(rs);
         }
-        
+    }
+
+    /**
+     * 指定された接続でメッセージ数を取得します。
+     *
+     * @param conn 使用するデータベース接続
+     * @return メッセージ数
+     * @throws SQLException データベース操作エラーが発生した場合
+     */
+    private int getMessageCount(Connection conn) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM messages";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            return getMessageCount(rs);
+        }
+    }
+
+    /**
+     * クエリ結果からメッセージ数を取得します。
+     *
+     * @param rs COUNTクエリの結果
+     * @return メッセージ数
+     * @throws SQLException 結果の読み取りに失敗した場合
+     */
+    private int getMessageCount(ResultSet rs) throws SQLException {
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
         return 0;
     }
 }
