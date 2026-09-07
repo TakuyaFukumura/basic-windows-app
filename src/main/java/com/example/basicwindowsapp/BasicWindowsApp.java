@@ -68,7 +68,7 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
-    private static final String APP_VERSION = "0.14.0";
+    private static final String APP_VERSION = "0.15.0";
     /**
      * アプリケーション共通のスタイルシート
      */
@@ -97,10 +97,13 @@ public class BasicWindowsApp extends Application {
      * ダークモードが有効かどうか
      */
     private boolean darkMode;
-    private boolean ioTaskRunning;
+    private boolean operationRunning;
     private Label statusLabel;
     private ProgressIndicator progressIndicator;
     private BarChart<String, Number> messageChart;
+
+    private record MessageSnapshot(Message latestMessage, List<Message> messages) {
+    }
 
     /**
      * アプリケーションのメインメソッド
@@ -180,8 +183,7 @@ public class BasicWindowsApp extends Application {
         primaryStage.show();
 
         // 初期データの読み込み
-        refreshMessageDisplay();
-        refreshMessageTable();
+        refreshMessages();
     }
 
     /**
@@ -220,13 +222,13 @@ public class BasicWindowsApp extends Application {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("app-root");
         root.setOnDragOver(event -> {
-            if (event.getDragboard().hasFiles() && !ioTaskRunning) {
+            if (event.getDragboard().hasFiles() && !operationRunning) {
                 event.acceptTransferModes(javafx.scene.input.TransferMode.COPY);
             }
             event.consume();
         });
         root.setOnDragDropped(event -> {
-            if (!ioTaskRunning && event.getDragboard().hasFiles()) {
+            if (!operationRunning && event.getDragboard().hasFiles()) {
                 handleDroppedFiles(event.getDragboard().getFiles());
             }
             event.setDropCompleted(true);
@@ -415,8 +417,7 @@ public class BasicWindowsApp extends Application {
         editButton.setOnAction(e -> showEditMessageDialog());
         deleteButton.setOnAction(e -> deleteSelectedMessage());
         refreshButton.setOnAction(e -> {
-            refreshMessageDisplay();
-            refreshMessageTable();
+            refreshMessages();
         });
 
         bottomSection.getChildren().addAll(
@@ -436,8 +437,7 @@ public class BasicWindowsApp extends Application {
                 this::deleteSelectedMessage);
         MenuItem refreshItem = createMenuItem("更新", new KeyCodeCombination(KeyCode.F5),
                 () -> {
-                    refreshMessageDisplay();
-                    refreshMessageTable();
+                    refreshMessages();
                 });
         messageMenu.getItems().addAll(addItem, editItem, deleteItem, new SeparatorMenuItem(),
                 refreshItem);
@@ -509,8 +509,7 @@ public class BasicWindowsApp extends Application {
             }
         };
         executeIoTask(task, count -> {
-            refreshMessageDisplay();
-            refreshMessageTable();
+            refreshMessages();
             showInfoDialog("成功", count + "件のメッセージを取り込みました。");
         }, "インポート");
     }
@@ -630,23 +629,23 @@ public class BasicWindowsApp extends Application {
 
     private <T> void executeIoTask(Task<T> task, java.util.function.Consumer<T> onSucceeded,
                                    String operation) {
-        if (ioTaskRunning) {
+        if (operationRunning) {
             showWarningDialog("処理中", "別のファイル処理が完了するまでお待ちください。");
             return;
         }
-        ioTaskRunning = true;
+        operationRunning = true;
         statusLabel.setText(operation + "中...");
         progressIndicator.progressProperty().bind(task.progressProperty());
         progressIndicator.setVisible(true);
         task.setOnSucceeded(event -> {
-            ioTaskRunning = false;
+            operationRunning = false;
             progressIndicator.progressProperty().unbind();
             progressIndicator.setVisible(false);
             statusLabel.setText(operation + "完了");
             onSucceeded.accept(task.getValue());
         });
         task.setOnFailed(event -> {
-            ioTaskRunning = false;
+            operationRunning = false;
             progressIndicator.progressProperty().unbind();
             progressIndicator.setVisible(false);
             statusLabel.setText(operation + "失敗");
@@ -656,6 +655,39 @@ public class BasicWindowsApp extends Application {
                     + error.getMessage());
         });
         Thread thread = new Thread(task, "message-" + operation);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private <T> void executeDatabaseTask(Task<T> task,
+                                         java.util.function.Consumer<T> onSucceeded,
+                                         String operation) {
+        if (operationRunning) {
+            showWarningDialog("処理中", "現在の処理が完了するまでお待ちください。");
+            return;
+        }
+        operationRunning = true;
+        statusLabel.setText(operation + "中...");
+        progressIndicator.progressProperty().bind(task.progressProperty());
+        progressIndicator.setVisible(true);
+        task.setOnSucceeded(event -> {
+            operationRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "完了");
+            onSucceeded.accept(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            operationRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "失敗");
+            Throwable error = task.getException();
+            LOGGER.log(Level.WARNING, "データベースの" + operation + "に失敗しました。", error);
+            showErrorDialog(operation + "エラー", "データベースの" + operation + "に失敗しました: "
+                    + error.getMessage());
+        });
+        Thread thread = new Thread(task, "database-" + operation);
         thread.setDaemon(true);
         thread.start();
     }
@@ -684,18 +716,18 @@ public class BasicWindowsApp extends Application {
             Message message = event.getRowValue();
             try {
                 String normalizedText = MessageValidator.normalize(event.getNewValue());
-                message.setText(normalizedText);
-                messageDao.updateMessage(message);
-                refreshMessageDisplay();
-                refreshMessageTable();
-                statusLabel.setText("編集完了");
+                Message updatedMessage = new Message(message.getId(), normalizedText,
+                        message.getCreatedAt());
+                Task<Integer> task = new Task<>() {
+                    @Override
+                    protected Integer call() throws SQLException {
+                        return messageDao.updateMessage(updatedMessage);
+                    }
+                };
+                executeDatabaseTask(task, ignored -> refreshMessages(), "編集");
             } catch (IllegalArgumentException e) {
-                refreshMessageTable();
+                messageTable.refresh();
                 showWarningDialog("入力エラー", e.getMessage());
-            } catch (SQLException e) {
-                refreshMessageTable();
-                LOGGER.log(Level.WARNING, "メッセージの更新に失敗しました。", e);
-                showErrorDialog("更新エラー", "メッセージの更新に失敗しました: " + e.getMessage());
             }
         });
         textCol.setPrefWidth(400);
@@ -746,33 +778,21 @@ public class BasicWindowsApp extends Application {
     /**
      * メインメッセージ表示を更新します
      */
-    private void refreshMessageDisplay() {
-        try {
-            Message latestMessage = messageDao.getLatestMessage();
-            if (latestMessage != null) {
-                mainMessageLabel.setText(latestMessage.getText());
-            } else {
-                mainMessageLabel.setText("メッセージがありません");
+    private void refreshMessages() {
+        Task<MessageSnapshot> task = new Task<>() {
+            @Override
+            protected MessageSnapshot call() throws SQLException {
+                return new MessageSnapshot(messageDao.getLatestMessage(),
+                        messageDao.getAllMessages());
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "メッセージの取得に失敗しました。", e);
-            showErrorDialog("メッセージ取得エラー", "メッセージの取得に失敗しました: " + e.getMessage());
-        }
-    }
-
-    /**
-     * メッセージテーブルを更新します
-     */
-    private void refreshMessageTable() {
-        try {
-            List<Message> messages = messageDao.getAllMessages();
-            messageData.clear();
-            messageData.addAll(messages);
+        };
+        executeDatabaseTask(task, snapshot -> {
+            Message latestMessage = snapshot.latestMessage();
+            mainMessageLabel.setText(latestMessage == null
+                    ? "メッセージがありません" : latestMessage.getText());
+            messageData.setAll(snapshot.messages());
             refreshMessageChart();
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "メッセージ一覧の取得に失敗しました。", e);
-            showErrorDialog("データ取得エラー", "メッセージ一覧の取得に失敗しました: " + e.getMessage());
-        }
+        }, "読み込み");
     }
 
     private void refreshMessageChart() {
@@ -805,15 +825,18 @@ public class BasicWindowsApp extends Application {
             try {
                 String normalizedText = MessageValidator.normalize(text);
                 Message newMessage = new Message(normalizedText, System.currentTimeMillis());
-                messageDao.insertMessage(newMessage);
-                refreshMessageDisplay();
-                refreshMessageTable();
-                showInfoDialog("成功", "メッセージが追加されました。");
+                Task<Integer> task = new Task<>() {
+                    @Override
+                    protected Integer call() throws SQLException {
+                        return messageDao.insertMessage(newMessage);
+                    }
+                };
+                executeDatabaseTask(task, ignored -> {
+                    refreshMessages();
+                    showInfoDialog("成功", "メッセージが追加されました。");
+                }, "追加");
             } catch (IllegalArgumentException e) {
                 showWarningDialog("入力エラー", e.getMessage());
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "メッセージの追加に失敗しました。", e);
-                showErrorDialog("追加エラー", "メッセージの追加に失敗しました: " + e.getMessage());
             }
         });
     }
@@ -837,16 +860,21 @@ public class BasicWindowsApp extends Application {
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
             try {
-                selectedMessage.setText(MessageValidator.normalize(text));
-                messageDao.updateMessage(selectedMessage);
-                refreshMessageDisplay();
-                refreshMessageTable();
-                showInfoDialog("成功", "メッセージが更新されました。");
+                String normalizedText = MessageValidator.normalize(text);
+                Message updatedMessage = new Message(selectedMessage.getId(), normalizedText,
+                        selectedMessage.getCreatedAt());
+                Task<Integer> task = new Task<>() {
+                    @Override
+                    protected Integer call() throws SQLException {
+                        return messageDao.updateMessage(updatedMessage);
+                    }
+                };
+                executeDatabaseTask(task, ignored -> {
+                    refreshMessages();
+                    showInfoDialog("成功", "メッセージが更新されました。");
+                }, "更新");
             } catch (IllegalArgumentException e) {
                 showWarningDialog("入力エラー", e.getMessage());
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "メッセージの更新に失敗しました。", e);
-                showErrorDialog("更新エラー", "メッセージの更新に失敗しました: " + e.getMessage());
             }
         });
     }
@@ -870,16 +898,17 @@ public class BasicWindowsApp extends Application {
 
         Optional<ButtonType> result = confirmDialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            try {
-                List<Integer> ids = selectedMessages.stream().map(Message::getId).toList();
-                messageDao.deleteMessages(ids);
-                refreshMessageDisplay();
-                refreshMessageTable();
-                showInfoDialog("成功", selectedMessages.size() + "件のメッセージが削除されました。");
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "メッセージの削除に失敗しました。", e);
-                showErrorDialog("削除エラー", "メッセージの削除に失敗しました: " + e.getMessage());
-            }
+            List<Integer> ids = selectedMessages.stream().map(Message::getId).toList();
+            Task<Integer> task = new Task<>() {
+                @Override
+                protected Integer call() throws SQLException {
+                    return messageDao.deleteMessages(ids);
+                }
+            };
+            executeDatabaseTask(task, deletedCount -> {
+                refreshMessages();
+                showInfoDialog("成功", deletedCount + "件のメッセージが削除されました。");
+            }, "削除");
         }
     }
 
