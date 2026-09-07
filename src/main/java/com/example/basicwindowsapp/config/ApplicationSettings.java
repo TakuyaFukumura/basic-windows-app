@@ -146,4 +146,13 @@ public final class ApplicationSettings {
     public void setWindowY(double windowY) {
         this.windowY = windowY;
     }
+
+    /**
+     * 設定ファイルの保存先を取得します。
+     *
+     * @return 設定ファイルのパス
+     */
+    public Path getPath() {
+        return path;
+    }
 }

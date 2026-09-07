@@ -3,6 +3,7 @@ package com.example.basicwindowsapp;
 import com.example.basicwindowsapp.dao.DatabaseManager;
 import com.example.basicwindowsapp.dao.MessageDao;
 import com.example.basicwindowsapp.config.ApplicationSettings;
+import com.example.basicwindowsapp.io.BackupService;
 import com.example.basicwindowsapp.io.MessageFileService;
 import com.example.basicwindowsapp.model.Message;
 import com.example.basicwindowsapp.validation.MessageValidator;
@@ -16,6 +17,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -35,7 +41,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,6 +78,7 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
+    private static final String APP_VERSION = "0.13.0";
     private ApplicationSettings settings;
 
     /**
@@ -102,6 +111,12 @@ public class BasicWindowsApp extends Application {
     private boolean darkMode;
 
     private boolean ioTaskRunning;
+
+    private Label statusLabel;
+
+    private ProgressIndicator progressIndicator;
+
+    private BarChart<String, Number> messageChart;
 
     /**
      * アプリケーション共通のスタイルシート
@@ -278,13 +293,26 @@ public class BasicWindowsApp extends Application {
 
         Label title = new Label("Basic Windows App");
         title.getStyleClass().add("section-title");
+        Label version = new Label("バージョン: " + APP_VERSION);
         Label description = new Label(
                 "JavaFX と SQLite を使用したメッセージ管理アプリケーションです。");
         description.setWrapText(true);
-        Label storage = new Label(
-                "データ保存先: ユーザーホーム/.basic-windows-app");
-        storage.setWrapText(true);
-        aboutLayout.getChildren().addAll(title, description, storage);
+        Label diagnostics = new Label("Java: " + System.getProperty("java.version")
+                + "\nデータベース: " + DatabaseManager.getInstance().getDatabasePath()
+                + "\n設定: " + settings.getPath());
+        diagnostics.setWrapText(true);
+
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("作成日");
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("件数");
+        messageChart = new BarChart<>(xAxis, yAxis);
+        messageChart.setTitle("日別メッセージ件数");
+        messageChart.setLegendVisible(false);
+        messageChart.setPrefHeight(240);
+
+        aboutLayout.getChildren().addAll(title, version, description, diagnostics, messageChart);
+        refreshMessageChart();
         return aboutLayout;
     }
     
@@ -395,6 +423,14 @@ public class BasicWindowsApp extends Application {
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
+
+        statusLabel = new Label("準備完了");
+        statusLabel.getStyleClass().add("status-label");
+        progressIndicator = new ProgressIndicator();
+        progressIndicator.setPrefSize(18, 18);
+        progressIndicator.setVisible(false);
+        Region statusSpacer = new Region();
+        HBox.setHgrow(statusSpacer, Priority.ALWAYS);
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -406,7 +442,8 @@ public class BasicWindowsApp extends Application {
         });
         
         bottomSection.getChildren().addAll(
-                addButton, editButton, deleteButton, refreshButton);
+                addButton, editButton, deleteButton, refreshButton,
+                statusSpacer, progressIndicator, statusLabel);
         
         return bottomSection;
     }
@@ -433,6 +470,10 @@ public class BasicWindowsApp extends Application {
                         KeyCombination.CONTROL_DOWN), this::importMessages),
                 createMenuItem("エクスポート", new KeyCodeCombination(KeyCode.E,
                         KeyCombination.CONTROL_DOWN, KeyCombination.SHIFT_DOWN), this::exportMessages),
+                createMenuItem("バックアップ", new KeyCodeCombination(KeyCode.B,
+                        KeyCombination.CONTROL_DOWN), this::backupApplicationData),
+                createMenuItem("復元", new KeyCodeCombination(KeyCode.R,
+                        KeyCombination.CONTROL_DOWN), this::restoreApplicationData),
                 new SeparatorMenuItem(),
                 createMenuItem("終了", new KeyCodeCombination(KeyCode.Q,
                         KeyCombination.CONTROL_DOWN), () -> {
@@ -510,7 +551,10 @@ public class BasicWindowsApp extends Application {
             return;
         }
 
-        List<Message> messages = new ArrayList<>(messageData);
+        List<Message> selectedMessages = new ArrayList<>(messageTable.getSelectionModel().getSelectedItems());
+        List<Message> messages = selectedMessages.isEmpty()
+                ? new ArrayList<>(messageData)
+                : selectedMessages;
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws IOException {
@@ -519,6 +563,63 @@ public class BasicWindowsApp extends Application {
             }
         };
         executeIoTask(task, ignored -> showInfoDialog("成功", "メッセージをエクスポートしました。"), "エクスポート");
+    }
+
+    private void backupApplicationData() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("アプリケーションデータをバックアップ");
+        chooser.setInitialFileName("basic-windows-app-backup.bwa");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("バックアップファイル (*.bwa)", "*.bwa"));
+        java.io.File file = chooser.showSaveDialog(messageTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        if (file.exists() && !confirmOverwrite(file.toPath())) {
+            return;
+        }
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws IOException {
+                BackupService.createBackup(file.toPath(),
+                        DatabaseManager.getInstance().getDatabasePath(), settings.getPath());
+                return null;
+            }
+        };
+        executeIoTask(task, ignored -> showInfoDialog("成功",
+                "データベースと設定をバックアップしました。"), "バックアップ");
+    }
+
+    private void restoreApplicationData() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("アプリケーションデータを復元");
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("バックアップファイル (*.bwa)", "*.bwa"));
+        java.io.File file = chooser.showOpenDialog(messageTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
+        dialog.setTitle("復元確認");
+        dialog.setHeaderText("現在のデータをバックアップで置き換えますか？");
+        dialog.setContentText("復元後はアプリケーションを再起動してください。");
+        styleDialog(dialog);
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws IOException {
+                BackupService.restoreBackup(file.toPath(),
+                        DatabaseManager.getInstance().getDatabasePath(), settings.getPath());
+                return null;
+            }
+        };
+        executeIoTask(task, ignored -> showInfoDialog("成功",
+                "データを復元しました。アプリケーションを再起動してください。"), "復元");
     }
 
     private FileChooser createMessageFileChooser(String title) {
@@ -559,12 +660,21 @@ public class BasicWindowsApp extends Application {
             return;
         }
         ioTaskRunning = true;
+        statusLabel.setText(operation + "中...");
+        progressIndicator.progressProperty().bind(task.progressProperty());
+        progressIndicator.setVisible(true);
         task.setOnSucceeded(event -> {
             ioTaskRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "完了");
             onSucceeded.accept(task.getValue());
         });
         task.setOnFailed(event -> {
             ioTaskRunning = false;
+            progressIndicator.progressProperty().unbind();
+            progressIndicator.setVisible(false);
+            statusLabel.setText(operation + "失敗");
             Throwable error = task.getException();
             LOGGER.log(Level.WARNING, "メッセージの" + operation + "に失敗しました。", error);
             showErrorDialog(operation + "エラー", "メッセージの" + operation + "に失敗しました: "
@@ -583,6 +693,8 @@ public class BasicWindowsApp extends Application {
     private TableView<Message> createMessageTable() {
         TableView<Message> table = new TableView<>();
         table.setItems(filteredMessageData);
+        table.setEditable(true);
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         
         // ID列
         TableColumn<Message, Integer> idCol = new TableColumn<>("ID");
@@ -592,6 +704,25 @@ public class BasicWindowsApp extends Application {
         // メッセージ列
         TableColumn<Message, String> textCol = new TableColumn<>("メッセージ");
         textCol.setCellValueFactory(new PropertyValueFactory<>("text"));
+        textCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        textCol.setOnEditCommit(event -> {
+            Message message = event.getRowValue();
+            try {
+                String normalizedText = MessageValidator.normalize(event.getNewValue());
+                message.setText(normalizedText);
+                messageDao.updateMessage(message);
+                refreshMessageDisplay();
+                refreshMessageTable();
+                statusLabel.setText("編集完了");
+            } catch (IllegalArgumentException e) {
+                refreshMessageTable();
+                showWarningDialog("入力エラー", e.getMessage());
+            } catch (SQLException e) {
+                refreshMessageTable();
+                LOGGER.log(Level.WARNING, "メッセージの更新に失敗しました。", e);
+                showErrorDialog("更新エラー", "メッセージの更新に失敗しました: " + e.getMessage());
+            }
+        });
         textCol.setPrefWidth(400);
         
         // 作成日時列
@@ -662,10 +793,26 @@ public class BasicWindowsApp extends Application {
             List<Message> messages = messageDao.getAllMessages();
             messageData.clear();
             messageData.addAll(messages);
+            refreshMessageChart();
         } catch (SQLException e) {
             LOGGER.log(Level.WARNING, "メッセージ一覧の取得に失敗しました。", e);
             showErrorDialog("データ取得エラー", "メッセージ一覧の取得に失敗しました: " + e.getMessage());
         }
+    }
+
+    private void refreshMessageChart() {
+        if (messageChart == null) {
+            return;
+        }
+        Map<String, Integer> counts = new TreeMap<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
+        for (Message message : messageData) {
+            String date = format.format(new Date(message.getCreatedAt()));
+            counts.merge(date, 1, Integer::sum);
+        }
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        counts.forEach((date, count) -> series.getData().add(new XYChart.Data<>(date, count)));
+        messageChart.getData().setAll(series);
     }
     
     /**
@@ -733,25 +880,27 @@ public class BasicWindowsApp extends Application {
      * 選択されたメッセージを削除します
      */
     private void deleteSelectedMessage() {
-        Message selectedMessage = messageTable.getSelectionModel().getSelectedItem();
-        if (selectedMessage == null) {
+        List<Message> selectedMessages = new ArrayList<>(
+                messageTable.getSelectionModel().getSelectedItems());
+        if (selectedMessages.isEmpty()) {
             showWarningDialog("選択エラー", "削除するメッセージを選択してください。");
             return;
         }
         
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
         confirmDialog.setTitle("削除確認");
-        confirmDialog.setHeaderText("メッセージを削除しますか？");
-        confirmDialog.setContentText("メッセージ: \"" + selectedMessage.getText() + "\"");
+        confirmDialog.setHeaderText(selectedMessages.size() + "件のメッセージを削除しますか？");
+        confirmDialog.setContentText("この操作は取り消せません。");
         styleDialog(confirmDialog);
         
         Optional<ButtonType> result = confirmDialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                messageDao.deleteMessage(selectedMessage.getId());
+                List<Integer> ids = selectedMessages.stream().map(Message::getId).toList();
+                messageDao.deleteMessages(ids);
                 refreshMessageDisplay();
                 refreshMessageTable();
-                showInfoDialog("成功", "メッセージが削除されました。");
+                showInfoDialog("成功", selectedMessages.size() + "件のメッセージが削除されました。");
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "メッセージの削除に失敗しました。", e);
                 showErrorDialog("削除エラー", "メッセージの削除に失敗しました: " + e.getMessage());
