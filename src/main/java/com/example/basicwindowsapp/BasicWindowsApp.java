@@ -72,6 +72,17 @@ public class BasicWindowsApp extends Application {
     private ObservableList<Message> messageData;
 
     /**
+     * ダークモードが有効かどうか
+     */
+    private boolean darkMode;
+
+    /**
+     * アプリケーション共通のスタイルシート
+     */
+    private static final String STYLESHEET = BasicWindowsApp.class
+            .getResource("/styles.css").toExternalForm();
+
+    /**
      * アプリケーションのメインメソッド
      *
      * <p>Javaアプリケーションの標準的なエントリーポイントです。
@@ -123,9 +134,11 @@ public class BasicWindowsApp extends Application {
         
         // メインレイアウトの作成
         BorderPane root = createMainLayout();
+        applyTheme(root);
         
         // シーンの作成
         Scene scene = new Scene(root, 800, 600);
+        scene.getStylesheets().add(STYLESHEET);
         
         // ステージ（ウィンドウ）の設定
         primaryStage.setTitle("Basic Windows App - Message Manager");
@@ -159,7 +172,7 @@ public class BasicWindowsApp extends Application {
     private void initializeUI() {
         // メインメッセージラベルの初期化
         mainMessageLabel = new Label();
-        mainMessageLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        mainMessageLabel.getStyleClass().add("message-label");
         
         // メッセージデータの初期化
         messageData = FXCollections.observableArrayList();
@@ -175,6 +188,7 @@ public class BasicWindowsApp extends Application {
      */
     private BorderPane createMainLayout() {
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("app-root");
         
         // 上部：メインメッセージ表示エリア
         VBox topSection = createTopSection();
@@ -185,7 +199,7 @@ public class BasicWindowsApp extends Application {
         root.setCenter(centerSection);
         
         // 下部：操作ボタン
-        HBox bottomSection = createBottomSection();
+        HBox bottomSection = createBottomSection(root);
         root.setBottom(bottomSection);
         
         return root;
@@ -200,10 +214,10 @@ public class BasicWindowsApp extends Application {
         VBox topSection = new VBox(10);
         topSection.setPadding(new Insets(20));
         topSection.setAlignment(Pos.CENTER);
-        topSection.setStyle("-fx-background-color: #f0f0f0;");
+        topSection.getStyleClass().add("top-section");
         
         Label titleLabel = new Label("現在のメッセージ");
-        titleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        titleLabel.getStyleClass().add("section-title");
         
         topSection.getChildren().addAll(titleLabel, mainMessageLabel);
         
@@ -218,9 +232,10 @@ public class BasicWindowsApp extends Application {
     private VBox createCenterSection() {
         VBox centerSection = new VBox(10);
         centerSection.setPadding(new Insets(20));
+        centerSection.getStyleClass().add("center-section");
         
         Label tableLabel = new Label("メッセージ一覧");
-        tableLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        tableLabel.getStyleClass().add("section-title");
         
         centerSection.getChildren().addAll(tableLabel, messageTable);
         
@@ -232,16 +247,23 @@ public class BasicWindowsApp extends Application {
      * 
      * @return 下部セクション
      */
-    private HBox createBottomSection() {
+    private HBox createBottomSection(BorderPane root) {
         HBox bottomSection = new HBox(10);
         bottomSection.setPadding(new Insets(20));
         bottomSection.setAlignment(Pos.CENTER);
+        bottomSection.getStyleClass().add("bottom-section");
         
         // ボタンの作成
         Button addButton = new Button("新規作成");
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
+        ToggleButton themeToggle = new ToggleButton("ダークモード");
+        themeToggle.setSelected(darkMode);
+        themeToggle.setOnAction(e -> {
+            darkMode = themeToggle.isSelected();
+            applyTheme(root);
+        });
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -252,7 +274,7 @@ public class BasicWindowsApp extends Application {
             refreshMessageTable();
         });
         
-        bottomSection.getChildren().addAll(addButton, editButton, deleteButton, refreshButton);
+        bottomSection.getChildren().addAll(addButton, editButton, deleteButton, refreshButton, themeToggle);
         
         return bottomSection;
     }
@@ -286,8 +308,37 @@ public class BasicWindowsApp extends Application {
         dateCol.setPrefWidth(150);
         
         table.getColumns().addAll(idCol, textCol, dateCol);
+        table.getStyleClass().add("message-table");
         
         return table;
+    }
+
+    /**
+     * 現在のテーマをメイン画面へ適用します。
+     *
+     * @param root メインレイアウト
+     */
+    private void applyTheme(BorderPane root) {
+        if (darkMode) {
+            if (!root.getStyleClass().contains("dark-mode")) {
+                root.getStyleClass().add("dark-mode");
+            }
+        } else {
+            root.getStyleClass().remove("dark-mode");
+        }
+    }
+
+    /**
+     * ダイアログへアプリケーションのテーマを適用します。
+     *
+     * @param dialog 対象ダイアログ
+     */
+    private void styleDialog(Dialog<?> dialog) {
+        dialog.getDialogPane().getStylesheets().add(STYLESHEET);
+        dialog.getDialogPane().getStyleClass().add("app-dialog");
+        if (darkMode) {
+            dialog.getDialogPane().getStyleClass().add("dark-mode");
+        }
     }
     
     /**
@@ -327,6 +378,7 @@ public class BasicWindowsApp extends Application {
         dialog.setTitle("新規メッセージ作成");
         dialog.setHeaderText("新しいメッセージを入力してください");
         dialog.setContentText("メッセージ:");
+        styleDialog(dialog);
         
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
@@ -358,6 +410,7 @@ public class BasicWindowsApp extends Application {
         dialog.setTitle("メッセージ編集");
         dialog.setHeaderText("メッセージを編集してください");
         dialog.setContentText("メッセージ:");
+        styleDialog(dialog);
         
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
@@ -389,6 +442,7 @@ public class BasicWindowsApp extends Application {
         confirmDialog.setTitle("削除確認");
         confirmDialog.setHeaderText("メッセージを削除しますか？");
         confirmDialog.setContentText("メッセージ: \"" + selectedMessage.getText() + "\"");
+        styleDialog(confirmDialog);
         
         Optional<ButtonType> result = confirmDialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -414,6 +468,7 @@ public class BasicWindowsApp extends Application {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        styleDialog(alert);
         alert.showAndWait();
     }
     
@@ -428,6 +483,7 @@ public class BasicWindowsApp extends Application {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        styleDialog(alert);
         alert.showAndWait();
     }
     
@@ -442,6 +498,7 @@ public class BasicWindowsApp extends Application {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+        styleDialog(alert);
         alert.showAndWait();
     }
 }
