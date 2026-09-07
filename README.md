@@ -15,7 +15,9 @@ Windowsアプリ開発における基本的なCRUD操作のベースとして使
 - **デフォルト復旧**: データベースが空になった場合に`Hello World`を自動復旧
 - **データ永続化**: SQLiteによるローカルデータベース管理
 - **入力検証**: 空白のみのメッセージは登録・更新不可
+- **メッセージ検索**: 一覧を本文で絞り込み
 - **ダークモード**: 画面上部右側の明暗アイコンでライトモードとダークモードを切替
+- **テーマ設定の保存**: 再起動後も最後に選択したテーマを復元
 
 ## 特徴
 
@@ -163,14 +165,16 @@ basic-windows-app/
         │       ├── BasicWindowsApp.java        # JavaFX UIとイベント処理
         │       ├── model/
         │       │   └── Message.java            # メッセージエンティティ
+        │       ├── validation/
+        │       │   └── MessageValidator.java   # メッセージ入力検証
         │       └── dao/
         │           ├── DatabaseManager.java    # SQLite接続・初期化
         │           └── MessageDao.java         # メッセージCRUD
         └── resources/                          # リソースファイル用ディレクトリ
 ```
 
-アプリケーションの起動時にプロジェクトの実行ディレクトリへ`basicwindowsapp.db`が作成されます。
-このファイルは`.gitignore`で除外され、メッセージはアプリケーションの再起動後も保持されます。
+アプリケーションの起動時にユーザーのホームディレクトリ配下の
+`.basic-windows-app\basicwindowsapp.db`が作成されます。このファイルはアプリケーションの再起動後も保持されます。
 
 ## Maven Wrapperについて
 
