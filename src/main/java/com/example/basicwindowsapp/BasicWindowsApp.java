@@ -1,8 +1,8 @@
 package com.example.basicwindowsapp;
 
+import com.example.basicwindowsapp.config.ApplicationSettings;
 import com.example.basicwindowsapp.dao.DatabaseManager;
 import com.example.basicwindowsapp.dao.MessageDao;
-import com.example.basicwindowsapp.config.ApplicationSettings;
 import com.example.basicwindowsapp.io.BackupService;
 import com.example.basicwindowsapp.io.MessageFileService;
 import com.example.basicwindowsapp.model.Message;
@@ -15,35 +15,25 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import javafx.stage.FileChooser;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,50 +69,38 @@ public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
     private static final String APP_VERSION = "0.13.0";
-    private ApplicationSettings settings;
-
-    /**
-     * メッセージDAO
-     */
-    private MessageDao messageDao;
-    
-    /**
-     * メインメッセージ表示ラベル
-     */
-    private Label mainMessageLabel;
-    
-    /**
-     * メッセージ一覧テーブル
-     */
-    private TableView<Message> messageTable;
-    
-    /**
-     * メッセージ一覧データ
-     */
-    private ObservableList<Message> messageData;
-
-    private FilteredList<Message> filteredMessageData;
-
-    private TextField searchField;
-
-    /**
-     * ダークモードが有効かどうか
-     */
-    private boolean darkMode;
-
-    private boolean ioTaskRunning;
-
-    private Label statusLabel;
-
-    private ProgressIndicator progressIndicator;
-
-    private BarChart<String, Number> messageChart;
-
     /**
      * アプリケーション共通のスタイルシート
      */
     private static final String STYLESHEET = BasicWindowsApp.class
             .getResource("/styles.css").toExternalForm();
+    private ApplicationSettings settings;
+    /**
+     * メッセージDAO
+     */
+    private MessageDao messageDao;
+    /**
+     * メインメッセージ表示ラベル
+     */
+    private Label mainMessageLabel;
+    /**
+     * メッセージ一覧テーブル
+     */
+    private TableView<Message> messageTable;
+    /**
+     * メッセージ一覧データ
+     */
+    private ObservableList<Message> messageData;
+    private FilteredList<Message> filteredMessageData;
+    private TextField searchField;
+    /**
+     * ダークモードが有効かどうか
+     */
+    private boolean darkMode;
+    private boolean ioTaskRunning;
+    private Label statusLabel;
+    private ProgressIndicator progressIndicator;
+    private BarChart<String, Number> messageChart;
 
     /**
      * アプリケーションのメインメソッド
@@ -172,18 +150,18 @@ public class BasicWindowsApp extends Application {
         darkMode = settings.isDarkMode();
         // データベースの初期化
         initializeDatabase();
-        
+
         // UIコンポーネントの初期化
         initializeUI();
-        
+
         // メインレイアウトの作成
         BorderPane root = createMainLayout();
         applyTheme(root);
-        
+
         // シーンの作成
         Scene scene = new Scene(root, settings.getWindowWidth(), settings.getWindowHeight());
         scene.getStylesheets().add(STYLESHEET);
-        
+
         // ステージ（ウィンドウ）の設定
         primaryStage.setTitle("Basic Windows App - Message Manager");
         primaryStage.setScene(scene);
@@ -197,18 +175,18 @@ public class BasicWindowsApp extends Application {
             primaryStage.setY(settings.getWindowY());
         }
         primaryStage.setOnCloseRequest(event -> saveSettings(primaryStage));
-        
+
         // ウィンドウを画面に表示
         primaryStage.show();
-        
+
         // 初期データの読み込み
         refreshMessageDisplay();
         refreshMessageTable();
     }
-    
+
     /**
      * データベースを初期化します
-     * 
+     *
      * @throws SQLException データベース初期化エラーが発生した場合
      */
     private void initializeDatabase() throws SQLException {
@@ -216,7 +194,7 @@ public class BasicWindowsApp extends Application {
         messageDao = new MessageDao();
         LOGGER.info("データベースが初期化されました。");
     }
-    
+
     /**
      * UIコンポーネントを初期化します
      */
@@ -224,18 +202,18 @@ public class BasicWindowsApp extends Application {
         // メインメッセージラベルの初期化
         mainMessageLabel = new Label();
         mainMessageLabel.getStyleClass().add("message-label");
-        
+
         // メッセージデータの初期化
         messageData = FXCollections.observableArrayList();
         filteredMessageData = new FilteredList<>(messageData);
-        
+
         // メッセージテーブルの初期化
         messageTable = createMessageTable();
     }
-    
+
     /**
      * メインレイアウトを作成します
-     * 
+     *
      * @return メインレイアウト
      */
     private BorderPane createMainLayout() {
@@ -254,12 +232,12 @@ public class BasicWindowsApp extends Application {
             event.setDropCompleted(true);
             event.consume();
         });
-        
+
         MenuBar menuBar = createMenuBar();
 
         root.setTop(menuBar);
         root.setCenter(createTabPane(root));
-        
+
         return root;
     }
 
@@ -315,10 +293,10 @@ public class BasicWindowsApp extends Application {
         refreshMessageChart();
         return aboutLayout;
     }
-    
+
     /**
      * 上部セクション（メインメッセージ表示）を作成します
-     * 
+     *
      * @return 上部セクション
      */
     private VBox createTopSection(BorderPane root) {
@@ -326,7 +304,7 @@ public class BasicWindowsApp extends Application {
         topSection.setPadding(new Insets(20));
         topSection.setAlignment(Pos.CENTER);
         topSection.getStyleClass().add("top-section");
-        
+
         Label titleLabel = new Label("現在のメッセージ");
         titleLabel.getStyleClass().add("section-title");
 
@@ -361,9 +339,9 @@ public class BasicWindowsApp extends Application {
         HBox header = new HBox(10, titleLabel, headerSpacer, themeToggle);
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("top-header");
-        
+
         topSection.getChildren().addAll(header, mainMessageLabel);
-        
+
         return topSection;
     }
 
@@ -379,17 +357,17 @@ public class BasicWindowsApp extends Application {
             LOGGER.log(Level.WARNING, "アプリケーション設定の保存に失敗しました。", e);
         }
     }
-    
+
     /**
      * 中央セクション（メッセージ一覧テーブル）を作成します
-     * 
+     *
      * @return 中央セクション
      */
     private VBox createCenterSection() {
         VBox centerSection = new VBox(10);
         centerSection.setPadding(new Insets(20));
         centerSection.getStyleClass().add("center-section");
-        
+
         Label tableLabel = new Label("メッセージ一覧");
         tableLabel.getStyleClass().add("section-title");
 
@@ -400,16 +378,16 @@ public class BasicWindowsApp extends Application {
                 filteredMessageData.setPredicate(message -> newValue == null
                         || newValue.isBlank()
                         || message.getText().toLowerCase(Locale.ROOT)
-                                .contains(newValue.trim().toLowerCase(Locale.ROOT))));
-        
+                        .contains(newValue.trim().toLowerCase(Locale.ROOT))));
+
         centerSection.getChildren().addAll(tableLabel, searchField, messageTable);
-        
+
         return centerSection;
     }
-    
+
     /**
      * 下部セクション（操作ボタン）を作成します
-     * 
+     *
      * @return 下部セクション
      */
     private HBox createBottomSection() {
@@ -417,7 +395,7 @@ public class BasicWindowsApp extends Application {
         bottomSection.setPadding(new Insets(20));
         bottomSection.setAlignment(Pos.CENTER);
         bottomSection.getStyleClass().add("bottom-section");
-        
+
         // ボタンの作成
         Button addButton = new Button("新規作成");
         Button editButton = new Button("編集");
@@ -431,7 +409,7 @@ public class BasicWindowsApp extends Application {
         progressIndicator.setVisible(false);
         Region statusSpacer = new Region();
         HBox.setHgrow(statusSpacer, Priority.ALWAYS);
-        
+
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
         editButton.setOnAction(e -> showEditMessageDialog());
@@ -440,11 +418,11 @@ public class BasicWindowsApp extends Application {
             refreshMessageDisplay();
             refreshMessageTable();
         });
-        
+
         bottomSection.getChildren().addAll(
                 addButton, editButton, deleteButton, refreshButton,
                 statusSpacer, progressIndicator, statusLabel);
-        
+
         return bottomSection;
     }
 
@@ -684,10 +662,10 @@ public class BasicWindowsApp extends Application {
         thread.setDaemon(true);
         thread.start();
     }
-    
+
     /**
      * メッセージテーブルを作成します
-     * 
+     *
      * @return メッセージテーブル
      */
     private TableView<Message> createMessageTable() {
@@ -695,12 +673,12 @@ public class BasicWindowsApp extends Application {
         table.setItems(filteredMessageData);
         table.setEditable(true);
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        
+
         // ID列
         TableColumn<Message, Integer> idCol = new TableColumn<>("ID");
         idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
         idCol.setPrefWidth(50);
-        
+
         // メッセージ列
         TableColumn<Message, String> textCol = new TableColumn<>("メッセージ");
         textCol.setCellValueFactory(new PropertyValueFactory<>("text"));
@@ -724,7 +702,7 @@ public class BasicWindowsApp extends Application {
             }
         });
         textCol.setPrefWidth(400);
-        
+
         // 作成日時列
         TableColumn<Message, String> dateCol = new TableColumn<>("作成日時");
         dateCol.setCellValueFactory(cellData -> {
@@ -733,10 +711,10 @@ public class BasicWindowsApp extends Application {
             return new javafx.beans.property.SimpleStringProperty(sdf.format(new Date(timestamp)));
         });
         dateCol.setPrefWidth(150);
-        
+
         table.getColumns().addAll(idCol, textCol, dateCol);
         table.getStyleClass().add("message-table");
-        
+
         return table;
     }
 
@@ -767,7 +745,7 @@ public class BasicWindowsApp extends Application {
             dialog.getDialogPane().getStyleClass().add("dark-mode");
         }
     }
-    
+
     /**
      * メインメッセージ表示を更新します
      */
@@ -784,7 +762,7 @@ public class BasicWindowsApp extends Application {
             showErrorDialog("メッセージ取得エラー", "メッセージの取得に失敗しました: " + e.getMessage());
         }
     }
-    
+
     /**
      * メッセージテーブルを更新します
      */
@@ -814,7 +792,7 @@ public class BasicWindowsApp extends Application {
         counts.forEach((date, count) -> series.getData().add(new XYChart.Data<>(date, count)));
         messageChart.getData().setAll(series);
     }
-    
+
     /**
      * 新規メッセージ作成ダイアログを表示します
      */
@@ -824,7 +802,7 @@ public class BasicWindowsApp extends Application {
         dialog.setHeaderText("新しいメッセージを入力してください");
         dialog.setContentText("メッセージ:");
         styleDialog(dialog);
-        
+
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
             try {
@@ -842,7 +820,7 @@ public class BasicWindowsApp extends Application {
             }
         });
     }
-    
+
     /**
      * メッセージ編集ダイアログを表示します
      */
@@ -852,13 +830,13 @@ public class BasicWindowsApp extends Application {
             showWarningDialog("選択エラー", "編集するメッセージを選択してください。");
             return;
         }
-        
+
         TextInputDialog dialog = new TextInputDialog(selectedMessage.getText());
         dialog.setTitle("メッセージ編集");
         dialog.setHeaderText("メッセージを編集してください");
         dialog.setContentText("メッセージ:");
         styleDialog(dialog);
-        
+
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(text -> {
             try {
@@ -875,7 +853,7 @@ public class BasicWindowsApp extends Application {
             }
         });
     }
-    
+
     /**
      * 選択されたメッセージを削除します
      */
@@ -886,13 +864,13 @@ public class BasicWindowsApp extends Application {
             showWarningDialog("選択エラー", "削除するメッセージを選択してください。");
             return;
         }
-        
+
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
         confirmDialog.setTitle("削除確認");
         confirmDialog.setHeaderText(selectedMessages.size() + "件のメッセージを削除しますか？");
         confirmDialog.setContentText("この操作は取り消せません。");
         styleDialog(confirmDialog);
-        
+
         Optional<ButtonType> result = confirmDialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
@@ -907,11 +885,11 @@ public class BasicWindowsApp extends Application {
             }
         }
     }
-    
+
     /**
      * 情報ダイアログを表示します
-     * 
-     * @param title タイトル
+     *
+     * @param title   タイトル
      * @param message メッセージ
      */
     private void showInfoDialog(String title, String message) {
@@ -922,11 +900,11 @@ public class BasicWindowsApp extends Application {
         styleDialog(alert);
         alert.showAndWait();
     }
-    
+
     /**
      * 警告ダイアログを表示します
-     * 
-     * @param title タイトル
+     *
+     * @param title   タイトル
      * @param message メッセージ
      */
     private void showWarningDialog(String title, String message) {
@@ -937,11 +915,11 @@ public class BasicWindowsApp extends Application {
         styleDialog(alert);
         alert.showAndWait();
     }
-    
+
     /**
      * エラーダイアログを表示します
-     * 
-     * @param title タイトル
+     *
+     * @param title   タイトル
      * @param message メッセージ
      */
     private void showErrorDialog(String title, String message) {

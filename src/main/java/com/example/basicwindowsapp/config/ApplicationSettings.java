@@ -67,6 +67,24 @@ public final class ApplicationSettings {
         return settings;
     }
 
+    private static double positiveOrDefault(Properties properties, String key, double defaultValue) {
+        try {
+            double value = Double.parseDouble(properties.getProperty(key, ""));
+            return Double.isFinite(value) && value > 0 ? value : defaultValue;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private static double finiteOrDefault(Properties properties, String key, double defaultValue) {
+        try {
+            double value = Double.parseDouble(properties.getProperty(key, ""));
+            return Double.isFinite(value) ? value : defaultValue;
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     /**
      * 現在の設定を保存します。
      *
@@ -86,24 +104,6 @@ public final class ApplicationSettings {
         }
         try (Writer writer = Files.newBufferedWriter(path)) {
             properties.store(writer, "Basic Windows App settings");
-        }
-    }
-
-    private static double positiveOrDefault(Properties properties, String key, double defaultValue) {
-        try {
-            double value = Double.parseDouble(properties.getProperty(key, ""));
-            return Double.isFinite(value) && value > 0 ? value : defaultValue;
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
-
-    private static double finiteOrDefault(Properties properties, String key, double defaultValue) {
-        try {
-            double value = Double.parseDouble(properties.getProperty(key, ""));
-            return Double.isFinite(value) ? value : defaultValue;
-        } catch (NumberFormatException e) {
-            return defaultValue;
         }
     }
 
