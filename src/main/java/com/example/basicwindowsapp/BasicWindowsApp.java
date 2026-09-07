@@ -2,6 +2,7 @@ package com.example.basicwindowsapp;
 
 import com.example.basicwindowsapp.dao.DatabaseManager;
 import com.example.basicwindowsapp.dao.MessageDao;
+import com.example.basicwindowsapp.config.ApplicationSettings;
 import com.example.basicwindowsapp.io.MessageFileService;
 import com.example.basicwindowsapp.model.Message;
 import com.example.basicwindowsapp.validation.MessageValidator;
@@ -30,7 +31,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.prefs.Preferences;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,10 +64,8 @@ import java.util.logging.Logger;
 public class BasicWindowsApp extends Application {
 
     private static final Logger LOGGER = Logger.getLogger(BasicWindowsApp.class.getName());
-    private static final String DARK_MODE_PREFERENCE = "darkMode";
-    private static final Preferences PREFERENCES =
-            Preferences.userNodeForPackage(BasicWindowsApp.class);
-    
+    private ApplicationSettings settings;
+
     /**
      * メッセージDAO
      */
@@ -147,7 +145,8 @@ public class BasicWindowsApp extends Application {
      */
     @Override
     public void start(Stage primaryStage) throws Exception {
-        darkMode = PREFERENCES.getBoolean(DARK_MODE_PREFERENCE, false);
+        settings = ApplicationSettings.load();
+        darkMode = settings.isDarkMode();
         // データベースの初期化
         initializeDatabase();
         
@@ -159,7 +158,7 @@ public class BasicWindowsApp extends Application {
         applyTheme(root);
         
         // シーンの作成
-        Scene scene = new Scene(root, 800, 600);
+        Scene scene = new Scene(root, settings.getWindowWidth(), settings.getWindowHeight());
         scene.getStylesheets().add(STYLESHEET);
         
         // ステージ（ウィンドウ）の設定
@@ -168,6 +167,13 @@ public class BasicWindowsApp extends Application {
         primaryStage.setResizable(true);
         primaryStage.setMinWidth(600);
         primaryStage.setMinHeight(400);
+        if (Double.isFinite(settings.getWindowX())) {
+            primaryStage.setX(settings.getWindowX());
+        }
+        if (Double.isFinite(settings.getWindowY())) {
+            primaryStage.setY(settings.getWindowY());
+        }
+        primaryStage.setOnCloseRequest(event -> saveSettings(primaryStage));
         
         // ウィンドウを画面に表示
         primaryStage.show();
@@ -251,7 +257,8 @@ public class BasicWindowsApp extends Application {
         themeToggle.setSelected(darkMode);
         themeToggle.setOnAction(e -> {
             darkMode = themeToggle.isSelected();
-            PREFERENCES.putBoolean(DARK_MODE_PREFERENCE, darkMode);
+            settings.setDarkMode(darkMode);
+            saveSettings((Stage) themeToggle.getScene().getWindow());
             themeToggle.setText(darkMode ? "🌙" : "☀");
             themeToggle.getTooltip().setText(darkMode ? "ライトモードに切替" : "ダークモードに切替");
             applyTheme(root);
@@ -264,6 +271,19 @@ public class BasicWindowsApp extends Application {
         topSection.getChildren().addAll(header, mainMessageLabel);
         
         return topSection;
+    }
+
+    private void saveSettings(Stage stage) {
+        settings.setDarkMode(darkMode);
+        settings.setWindowWidth(stage.getWidth());
+        settings.setWindowHeight(stage.getHeight());
+        settings.setWindowX(stage.getX());
+        settings.setWindowY(stage.getY());
+        try {
+            settings.save();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "アプリケーション設定の保存に失敗しました。", e);
+        }
     }
     
     /**
