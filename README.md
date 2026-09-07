@@ -25,7 +25,7 @@ Windowsアプリ開発における基本的なCRUD操作のベースとして使
 
 ## 必要な環境
 
-- **Java**: Java 17 以上
+- **Java**: Java 24 以上
 - **Maven**: 3.6.0 以上（Maven Wrapperを使用する場合は不要）
 - **OS**: Windows 10/11（他のOSでも動作可能）
 
@@ -215,7 +215,7 @@ CREATE TABLE messages (
 
 Maven設定ファイルです。以下の設定が含まれています：
 
-- **Java 17対応**: 最新のJava機能を使用可能
+- **Java 24対応**: JavaFX 26.0.2を使用可能
 - **JavaFX依存関係**: JavaFX ControlsとFXMLライブラリ
 - **SQLite JDBC**: SQLite 3.42.0.0によるローカルデータ永続化
 - **プラグイン設定**: コンパイルと実行用の設定
