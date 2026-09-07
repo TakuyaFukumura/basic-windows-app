@@ -8,60 +8,6 @@
 ここに記載する内容は確定した実装計画ではなく、優先順位を付けるための候補です。実装時は、既存の
 シンプルさ、Windows 以外でもビルドできること、依存関係を増やしすぎないことを優先します。
 
-## 現在の実装
-
-### 提供済みの機能
-
-- Java 24 と Maven を利用した JavaFX アプリケーション
-- JavaFX Controls と FXML の依存関係
-- SQLite によるローカルデータ永続化
-- `messages` テーブルを対象としたメッセージの登録・取得・更新・削除
-- `TableView` による ID、メッセージ本文、作成日時の一覧表示
-- ファイル選択またはドラッグ＆ドロップによるメッセージのインポート
-- メッセージのエクスポート時の上書き確認
-- ファイル入出力とインポート登録のバックグラウンド実行
-- 起動時のデータベース・テーブル初期化
-- データが空になった場合の `Hello World` メッセージ自動復旧
-- 空白だけのメッセージを登録・更新しない入力検証
-- 情報、警告、確認、入力用ダイアログ
-- ライトモード／ダークモードの切替（メイン画面とダイアログ）
-- アプリケーション設定（テーマ、ウィンドウ表示設定）の保存と復元
-- メニューバー、ツールバー、キーボードショートカットによる操作
-- Maven Wrapper による再現性のあるビルド
-- GitHub Actions による Ubuntu・Windows・macOS のビルド確認
-- `jpackage` プロファイルによるアプリケーションイメージ作成
-
-### 現在の構成
-
-```text
-src/main/
-├── java/com/example/basicwindowsapp/
-│   ├── BasicWindowsApp.java       # JavaFX UI とイベント処理
-│   ├── io/MessageFileService.java # メッセージのテキスト／CSV入出力
-│   ├── model/Message.java         # メッセージモデル
-│   └── dao/
-│       ├── DatabaseManager.java   # SQLite 接続と初期化
-│       └── MessageDao.java        # メッセージ CRUD
-└── resources/
-    └── styles.css                 # ライト／ダークテーマ
-```
-
-アプリケーションデータは、実行ディレクトリではなくユーザーのホームディレクトリ配下の
-`.basic-windows-app\basicwindowsapp.db` に保存されます。アプリケーションの削除や再インストール後も
-データを残したい場合は、この保存先を仕様として明示し、バックアップ・削除方法も案内する必要があります。
-
-### ビルドと配布の現状
-
-```text
-mvnw.cmd clean install              # Windows の完全ビルド
-mvnw.cmd javafx:run                 # GUI を起動
-mvnw.cmd clean package -Pjpackage   # Windows アプリケーションイメージ
-```
-
-CI では `clean compile`、`test`、`package` を実行します。現時点で自動テストクラスはないため、
-`test` はビルドに含まれる検証フェーズとして実行されます。`javafx:run` はディスプレイが必要なので
-CI では実行しません。
-
 ## 拡張方針
 
 ### 設定の保存と復元
