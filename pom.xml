@@ -6,7 +6,7 @@
 
     <groupId>com.example</groupId>
     <artifactId>basic-windows-app</artifactId>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <packaging>jar</packaging>
 
     <name>Basic Windows App</name>
@@ -19,6 +19,9 @@
         <javafx.version>26.0.2</javafx.version>
         <maven.compiler.plugin.version>3.16.0</maven.compiler.plugin.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
+        <jpackage.maven.plugin.version>1.8.0</jpackage.maven.plugin.version>
+        <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
+        <maven.jar.plugin.version>3.4.2</maven.jar.plugin.version>
     </properties>
 
     <dependencies>
@@ -76,4 +79,75 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>jpackage</id>
+            <build>
+                <plugins>
+                    <!-- Copy runtime dependencies beside the application JAR for jpackage. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>${maven.dependency.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>copy-runtime-dependencies</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}</outputDirectory>
+                                    <includeScope>runtime</includeScope>
+                                    <excludeTransitive>false</excludeTransitive>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Add dependency JARs to the launcher class path. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven.jar.plugin.version}</version>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathPrefix>./</classpathPrefix>
+                                    <mainClass>com.example.basicwindowsapp.BasicWindowsApp</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Requires a JDK containing jpackage. The default output is an app image. -->
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>${jpackage.maven.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>package-application</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jpackage</goal>
+                                </goals>
+                                <configuration>
+                                    <input>${project.build.directory}</input>
+                                    <destination>${project.build.directory}/dist</destination>
+                                    <name>BasicWindowsApp</name>
+                                    <mainJar>${project.build.finalName}.jar</mainJar>
+                                    <mainClass>com.example.basicwindowsapp.BasicWindowsApp</mainClass>
+                                    <appVersion>${project.version}</appVersion>
+                                    <type>APP_IMAGE</type>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

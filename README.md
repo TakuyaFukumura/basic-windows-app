@@ -125,6 +125,25 @@ mvn clean package
 標準のJARにはアプリケーションのメインマニフェスト属性がないため、
 アプリケーションの起動には方法1の`javafx:run`を使用してください。
 
+### 方法4: Windowsアプリケーションイメージの作成
+
+JDKに含まれる`jpackage`を使用して、Javaランタイムと依存ライブラリを含む
+自己完結型のWindowsアプリケーションイメージを作成できます。
+Windows向けのパッケージはWindows環境で作成してください。
+
+```cmd
+mvnw.cmd clean package -Pjpackage
+```
+
+作成されたアプリケーションは`target\dist\BasicWindowsApp`に出力されます。
+アプリケーションイメージ内の`BasicWindowsApp.exe`から起動できます。
+MSIインストーラーが必要な場合は、`pom.xml`の`<type>APP_IMAGE</type>`を
+`<type>MSI</type>`に変更し、WiX Toolsetをインストールしてください。
+MSIではインストール先、スタートメニュー、ショートカットなどを設定できます。
+
+インストール後のSQLiteデータベースは、実行ディレクトリではなく
+ユーザーのホームディレクトリ配下の`.basic-windows-app`に保存されます。
+
 ## プロジェクト構造
 
 ```
