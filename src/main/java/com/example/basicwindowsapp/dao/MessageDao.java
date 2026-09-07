@@ -22,17 +22,17 @@ import java.util.List;
  * @since 0.2.0
  */
 public class MessageDao {
-    
+
     /**
      * DatabaseManagerのインスタンス
      */
     private final DatabaseManager dbManager;
-    
+
     /**
      * デフォルトメッセージ（削除時の復旧用）
      */
     private static final String DEFAULT_MESSAGE = "Hello World";
-    
+
     /**
      * コンストラクタ
      */
