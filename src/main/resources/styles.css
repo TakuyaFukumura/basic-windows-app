@@ -7,6 +7,26 @@
     -fx-text-fill: #202124;
 }
 
+.app-root .menu-bar,
+.app-root .tool-bar {
+    -fx-background-color: #f0f0f0;
+}
+
+.app-root .menu-bar .label,
+.app-root .menu-item .label {
+    -fx-text-fill: #202124;
+}
+
+.app-root .context-menu {
+    -fx-background-color: #ffffff;
+}
+
+.app-root .text-field {
+    -fx-text-fill: #202124;
+    -fx-prompt-text-fill: #6b6b6b;
+    -fx-control-inner-background: #ffffff;
+}
+
 .app-root .message-label {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
@@ -65,6 +85,30 @@
     -fx-text-fill: #f1f3f4;
 }
 
+.app-root.dark-mode .menu-bar,
+.app-root.dark-mode .tool-bar {
+    -fx-background-color: #303134;
+}
+
+.app-root.dark-mode .menu-bar .label,
+.app-root.dark-mode .menu-item .label {
+    -fx-text-fill: #f1f3f4;
+}
+
+.app-root.dark-mode .context-menu {
+    -fx-background-color: #303134;
+}
+
+.app-root.dark-mode .menu-item:focused {
+    -fx-background-color: #5f6368;
+}
+
+.app-root.dark-mode .text-field {
+    -fx-text-fill: #f1f3f4;
+    -fx-prompt-text-fill: #bdc1c6;
+    -fx-control-inner-background: #303134;
+}
+
 .app-root.dark-mode .top-section {
     -fx-background-color: #303134;
 }
@@ -105,6 +149,14 @@
     -fx-text-fill: #f1f3f4;
 }
 
+.app-root.dark-mode .message-table .table-row-cell:filled:selected {
+    -fx-background-color: #496a8f;
+}
+
+.app-root.dark-mode .message-table .table-row-cell:filled:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
+
 .app-dialog {
     -fx-background-color: #ffffff;
 }
@@ -123,6 +175,17 @@
 
 .app-dialog.dark-mode .content {
     -fx-text-fill: #f1f3f4;
+}
+
+.app-dialog.dark-mode .header-panel,
+.app-dialog.dark-mode .content {
+    -fx-background-color: #202124;
+}
+
+.app-dialog.dark-mode .text-field {
+    -fx-text-fill: #f1f3f4;
+    -fx-prompt-text-fill: #bdc1c6;
+    -fx-control-inner-background: #303134;
 }
 
 .app-dialog.dark-mode .button {
