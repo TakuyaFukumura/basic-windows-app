@@ -54,7 +54,7 @@ java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxm
 # JARを作成
 mvn clean package
 
-# JAR場所: target/basic-windows-app-0.14.0.jar
+# JAR場所: target/basic-windows-app-0.15.0.jar
 # 注意: 標準JARにはメインマニフェスト属性がありません - mvn javafx:runを使用してください
 ```
 
