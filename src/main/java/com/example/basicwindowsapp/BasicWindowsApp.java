@@ -274,9 +274,9 @@ public class BasicWindowsApp extends Application {
         Region headerSpacer = new Region();
         HBox.setHgrow(headerSpacer, Priority.ALWAYS);
 
-        ToggleButton themeToggle = new ToggleButton("☀");
+        ToggleButton themeToggle = new ToggleButton(darkMode ? "🌙" : "☀");
         themeToggle.setAccessibleText("テーマ切替");
-        themeToggle.setTooltip(new Tooltip("ダークモードに切替"));
+        themeToggle.setTooltip(new Tooltip(darkMode ? "ライトモードに切替" : "ダークモードに切替"));
         themeToggle.setSelected(darkMode);
         themeToggle.setOnAction(e -> {
             darkMode = themeToggle.isSelected();
