@@ -16,6 +16,7 @@ Windowsアプリ開発における基本的なCRUD操作のベースとして使
 - **データ永続化**: SQLiteによるローカルデータベース管理
 - **入力検証**: 空白のみのメッセージは登録・更新不可
 - **メッセージ検索**: 一覧を本文で絞り込み
+- **ファイル入出力**: メッセージ一覧をUTF-8のテキストまたはCSVでインポート・エクスポート
 - **ダークモード**: 画面上部右側の明暗アイコンでライトモードとダークモードを切替
 - **テーマ設定の保存**: 再起動後も最後に選択したテーマを復元
 
@@ -163,6 +164,8 @@ basic-windows-app/
         ├── java/
         │   └── com/example/basicwindowsapp/
         │       ├── BasicWindowsApp.java        # JavaFX UIとイベント処理
+        │       ├── io/
+        │       │   └── MessageFileService.java # テキスト／CSV入出力
         │       ├── model/
         │       │   └── Message.java            # メッセージエンティティ
         │       ├── validation/

@@ -2,6 +2,7 @@ package com.example.basicwindowsapp;
 
 import com.example.basicwindowsapp.dao.DatabaseManager;
 import com.example.basicwindowsapp.dao.MessageDao;
+import com.example.basicwindowsapp.io.MessageFileService;
 import com.example.basicwindowsapp.model.Message;
 import com.example.basicwindowsapp.validation.MessageValidator;
 import javafx.application.Application;
@@ -19,7 +20,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.stage.FileChooser;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -305,6 +309,8 @@ public class BasicWindowsApp extends Application {
         Button editButton = new Button("編集");
         Button deleteButton = new Button("削除");
         Button refreshButton = new Button("更新");
+        Button importButton = new Button("インポート");
+        Button exportButton = new Button("エクスポート");
         
         // ボタンイベントの設定
         addButton.setOnAction(e -> showAddMessageDialog());
@@ -314,10 +320,69 @@ public class BasicWindowsApp extends Application {
             refreshMessageDisplay();
             refreshMessageTable();
         });
+        importButton.setOnAction(e -> importMessages());
+        exportButton.setOnAction(e -> exportMessages());
         
-        bottomSection.getChildren().addAll(addButton, editButton, deleteButton, refreshButton);
+        bottomSection.getChildren().addAll(
+                addButton, editButton, deleteButton, refreshButton, importButton, exportButton);
         
         return bottomSection;
+    }
+
+    private void importMessages() {
+        FileChooser chooser = createMessageFileChooser("メッセージをインポート");
+        java.io.File file = chooser.showOpenDialog(messageTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            MessageFileService.Format format = getFileFormat(file.toPath());
+            List<Message> messages = MessageFileService.read(file.toPath(), format);
+            for (Message message : messages) {
+                messageDao.insertMessage(message);
+            }
+            refreshMessageDisplay();
+            refreshMessageTable();
+            showInfoDialog("成功", messages.size() + "件のメッセージを取り込みました。");
+        } catch (IOException | SQLException e) {
+            LOGGER.log(Level.WARNING, "メッセージのインポートに失敗しました。", e);
+            showErrorDialog("インポートエラー", "メッセージのインポートに失敗しました: " + e.getMessage());
+        }
+    }
+
+    private void exportMessages() {
+        FileChooser chooser = createMessageFileChooser("メッセージをエクスポート");
+        chooser.setInitialFileName("messages.csv");
+        java.io.File file = chooser.showSaveDialog(messageTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            MessageFileService.Format format = getFileFormat(file.toPath());
+            MessageFileService.write(file.toPath(), messageData, format);
+            showInfoDialog("成功", "メッセージをエクスポートしました。");
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "メッセージのエクスポートに失敗しました。", e);
+            showErrorDialog("エクスポートエラー", "メッセージのエクスポートに失敗しました: " + e.getMessage());
+        }
+    }
+
+    private FileChooser createMessageFileChooser(String title) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(title);
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("CSVファイル (*.csv)", "*.csv"),
+                new FileChooser.ExtensionFilter("テキストファイル (*.txt)", "*.txt"));
+        return chooser;
+    }
+
+    private MessageFileService.Format getFileFormat(Path path) {
+        String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return fileName.endsWith(".txt")
+                ? MessageFileService.Format.TEXT
+                : MessageFileService.Format.CSV;
     }
     
     /**

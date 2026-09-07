@@ -32,6 +32,7 @@
 src/main/
 ├── java/com/example/basicwindowsapp/
 │   ├── BasicWindowsApp.java       # JavaFX UI とイベント処理
+│   ├── io/MessageFileService.java # メッセージのテキスト／CSV入出力
 │   ├── model/Message.java         # メッセージモデル
 │   └── dao/
 │       ├── DatabaseManager.java   # SQLite 接続と初期化
@@ -62,7 +63,6 @@ CI では実行しません。
 
 デスクトップアプリケーションで頻出する入出力の例を、既存のメッセージ管理と整合する形で追加します。
 
-- テキストまたは CSV のインポート・エクスポート
 - ファイル選択、ドラッグ＆ドロップ、上書き確認
 - アプリケーション設定（テーマ、表示設定、データ保存先）の保存と復元
 - 設定ファイルの形式・保存場所・互換性を定義
