@@ -10,47 +10,53 @@
 
 ## 現在の実装
 
-### 提供済みの機能
+### 提供している機能
 
-- Java 24 と Maven を利用した JavaFX アプリケーション
-- JavaFX Controls と FXML の依存関係
+- Java 24、Maven、JavaFX 26.0.2 によるデスクトップアプリケーション
 - SQLite によるローカルデータ永続化
 - `messages` テーブルを対象としたメッセージの登録・取得・更新・削除
-- `TableView` による ID、メッセージ本文、作成日時の一覧表示
-- ファイル選択またはドラッグ＆ドロップによるメッセージのインポート
-- メッセージのエクスポート時の上書き確認
+- 最新メッセージの表示と、ID・本文・作成日時を表示する `TableView`
+- メッセージ本文の大文字・小文字を区別しない一覧検索
+- 空白だけのメッセージを登録・更新しない入力検証
+- CSV／UTF-8テキストのインポート・エクスポート
+- ファイル選択またはドラッグ＆ドロップによるインポート
+- エクスポート時の上書き確認
 - ファイル入出力とインポート登録のバックグラウンド実行
 - 起動時のデータベース・テーブル初期化
 - データが空になった場合の `Hello World` メッセージ自動復旧
-- 空白だけのメッセージを登録・更新しない入力検証
-- 情報、警告、確認、入力用ダイアログ
-- ライトモード／ダークモードの切替（メイン画面とダイアログ）
-- アプリケーション設定（テーマ、ウィンドウ表示設定）の保存と復元
-- メニューバー、ツールバー、キーボードショートカットによる操作
-- Maven Wrapper による再現性のあるビルド
-- GitHub Actions による Ubuntu・Windows・macOS のビルド確認
+- ライトモード／ダークモードの切替と、情報・警告・確認・入力ダイアログ
+- テーマ、ウィンドウサイズ、ウィンドウ位置の保存と復元
+- `TabPane` によるメッセージ管理画面とアプリ情報画面の切替
+- メニューバー、操作ボタン、キーボードショートカットによる操作
+- Maven Wrapper、JUnit 5、GitHub Actions によるビルド・テスト
 - `jpackage` プロファイルによるアプリケーションイメージ作成
 
 ### 現在の構成
 
 ```text
-src/main/
-├── java/com/example/basicwindowsapp/
-│   ├── BasicWindowsApp.java       # JavaFX UI とイベント処理
-│   ├── io/MessageFileService.java # メッセージのテキスト／CSV入出力
-│   ├── model/Message.java         # メッセージモデル
-│   └── dao/
-│       ├── DatabaseManager.java   # SQLite 接続と初期化
-│       └── MessageDao.java        # メッセージ CRUD
-└── resources/
-    └── styles.css                 # ライト／ダークテーマ
+src/
+├── main/
+│   ├── java/com/example/basicwindowsapp/
+│   │   ├── BasicWindowsApp.java          # JavaFX UI とイベント処理
+│   │   ├── config/ApplicationSettings.java # 設定の保存と復元
+│   │   ├── dao/
+│   │   │   ├── DatabaseManager.java      # SQLite 接続と初期化
+│   │   │   └── MessageDao.java           # メッセージ CRUD
+│   │   ├── io/MessageFileService.java   # テキスト／CSV 入出力
+│   │   ├── model/Message.java            # メッセージモデル
+│   │   └── validation/MessageValidator.java # 入力検証と正規化
+│   └── resources/styles.css              # ライト／ダークテーマ
+└── test/java/com/example/basicwindowsapp/
+    ├── config/ApplicationSettingsTest.java
+    ├── io/MessageFileServiceTest.java
+    └── validation/MessageValidatorTest.java
 ```
 
 アプリケーションデータは、実行ディレクトリではなくユーザーのホームディレクトリ配下の
-`.basic-windows-app\basicwindowsapp.db` に保存されます。アプリケーションの削除や再インストール後も
-データを残したい場合は、この保存先を仕様として明示し、バックアップ・削除方法も案内する必要があります。
+`.basic-windows-app\basicwindowsapp.db` に保存されます。テーマとウィンドウ設定は同じディレクトリの
+`.basic-windows-app\settings.properties` に Java Properties 形式で保存されます。
 
-### ビルドと配布の現状
+### ビルドと配布
 
 ```text
 mvnw.cmd clean install              # Windows の完全ビルド
@@ -58,46 +64,34 @@ mvnw.cmd javafx:run                 # GUI を起動
 mvnw.cmd clean package -Pjpackage   # Windows アプリケーションイメージ
 ```
 
-CI では `clean compile`、`test`、`package` を実行します。現時点で自動テストクラスはないため、
-`test` はビルドに含まれる検証フェーズとして実行されます。`javafx:run` はディスプレイが必要なので
-CI では実行しません。
+CI では Ubuntu で `clean compile`、`test`、`package` を実行し、Windows と macOS では
+`clean compile` を実行します。GUI 起動はディスプレイが必要なため CI の対象外です。
 
 ## 拡張方針
 
-### 設定の保存と復元
+### 優先度 1: UI コンポーネントのサンプル
 
-設定の保存と復元（テーマ、ウィンドウサイズ・位置）は実装済みです。設定は
-ユーザーのホームディレクトリ配下の `.basic-windows-app\settings.properties` に
-Java Properties形式で保存され、未知のキーは無視し、不正な値は既定値へ戻します。
+テンプレートとしての学習価値を高めるため、既存のメッセージ管理を壊さず、実際のユースケースに必要なものから追加します。
 
-外部ライブラリを追加する場合は、用途、ライセンス、保守状況、Windows 配布時の影響を確認してから
-採用します。JSON や PDF などのライブラリは、必要性が明確になった機能の実装時に追加します。
-
-### 優先度 3: UI コンポーネントのサンプル
-
-テンプレートとしての学習価値を高めるため、実際のユースケースに必要なものから追加します。
-
-- `TabPane` による複数画面
-- `TableView` の編集、複数選択、フィルター、CSV 出力
+- `TableView` の編集、複数選択、フィルター、CSV 出力の強化
 - `Chart` による基本的なデータ可視化
-- ユーザー向けエラー表示、ステータス表示、進捗表示
+- ステータス表示と進捗表示
 
 FXML を導入する場合は、画面・コントローラー・モデルの責務と、プログラムによる UI 構築との使い分けを
 先に決めます。小さな画面まで一律に FXML 化することは避けます。
 
-### 優先度 4: 国際化と運用
+### 優先度 2: 国際化と運用
 
-基本機能が安定した後に、配布・運用を見据えた機能を追加します。
+基本機能を維持しながら、配布・運用を見据えた機能を追加します。
 
 - `ResourceBundle` による日本語・英語のメッセージ管理
-- SLF4J などを用いたログ出力とローテーション
 - バージョン情報、診断情報、ログ保存場所の表示
 - アプリケーション設定とユーザーデータのバックアップ／復元
 - Windows 向けインストーラー（MSI）とショートカット設定
 - 更新通知と更新手順の提供
 
+外部ライブラリを追加する場合は、用途、ライセンス、保守状況、Windows 配布時の影響を確認してから採用します。
 自動更新は、署名、配布元の信頼性、失敗時の復旧方法を含めて設計できる段階になってから検討します。
-単にダウンロードして置き換えるだけの更新機能は採用しません。
 
 ## 実装時の受け入れ基準
 
@@ -130,9 +124,9 @@ FXML を導入する場合は、画面・コントローラー・モデルの責
 - `src/main/java/com/example/basicwindowsapp/model/`
 - `src/main/java/com/example/basicwindowsapp/dao/`
 - `src/main/resources/`
+- `src/test/java/com/example/basicwindowsapp/`
 - `pom.xml`
 - `README.md`
-- `docs/DESIGN.md`
 - `.github/workflows/ci.yml`
 
 実装されていないクラス名やリソースパスを、あらかじめ「実装ファイル」として記載することは避けます。
