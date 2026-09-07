@@ -12,8 +12,9 @@ Windowsアプリ開発における基本的なCRUD操作のベースとして使
 - **メッセージ表示**: SQLiteデータベースから取得したメッセージを画面に表示
 - **CRUD操作**: メッセージの新規作成・編集・削除・一覧表示
 - **メッセージ管理**: TableViewを使用したメッセージ一覧と操作UI
-- **デフォルト復旧**: 全メッセージ削除時のデフォルトメッセージ自動復旧
+- **デフォルト復旧**: データベースが空になった場合に`Hello World`を自動復旧
 - **データ永続化**: SQLiteによるローカルデータベース管理
+- **入力検証**: 空白のみのメッセージは登録・更新不可
 
 ## 特徴
 
@@ -94,7 +95,7 @@ java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxm
 
 **注意**: `path/to/javafx/lib`は、お使いの環境のJavaFXライブラリパスに置き換えてください。
 
-### 方法3: 実行可能JARファイルの作成
+### 方法3: JARファイルの作成
 
 #### Maven Wrapperを使用する場合
 
@@ -108,7 +109,9 @@ java --module-path "path/to/javafx/lib" --add-modules javafx.controls,javafx.fxm
 mvn clean package
 ```
 
-この後、`target`ディレクトリに作成されたJARファイルを実行できます。
+`target`ディレクトリにJARファイルが作成されます。
+標準のJARにはアプリケーションのメインマニフェスト属性がないため、
+アプリケーションの起動には方法1の`javafx:run`を使用してください。
 
 ## プロジェクト構造
 
@@ -125,12 +128,18 @@ basic-windows-app/
 └── src/
     └── main/
         ├── java/
-        │   └── com/
-        │       └── example/
-        │           └── basicwindowsapp/
-        │               └── BasicWindowsApp.java   # メインアプリケーションクラス
-        └── resources/                         # リソースファイル用ディレクトリ
+        │   └── com/example/basicwindowsapp/
+        │       ├── BasicWindowsApp.java        # JavaFX UIとイベント処理
+        │       ├── model/
+        │       │   └── Message.java            # メッセージエンティティ
+        │       └── dao/
+        │           ├── DatabaseManager.java    # SQLite接続・初期化
+        │           └── MessageDao.java         # メッセージCRUD
+        └── resources/                          # リソースファイル用ディレクトリ
 ```
+
+アプリケーションの起動時にプロジェクトの実行ディレクトリへ`basicwindowsapp.db`が作成されます。
+このファイルは`.gitignore`で除外され、メッセージはアプリケーションの再起動後も保持されます。
 
 ## Maven Wrapperについて
 
@@ -166,9 +175,34 @@ mvnw.cmd javafx:run
 
 メインのアプリケーションクラスです。JavaFXの`Application`クラスを継承し、以下の機能を提供します：
 
-- **ウィンドウの作成**: 400x300ピクセルのメインウィンドウ
-- **Hello Worldメッセージの表示**: 中央に配置された大きなテキスト
-- **レスポンシブデザイン**: ウィンドウサイズ変更に対応
+- **ウィンドウの作成**: 初期サイズ800x600、最小サイズ600x400のリサイズ可能なウィンドウ
+- **現在のメッセージ表示**: 最新メッセージを上部に大きく表示
+- **メッセージ一覧**: ID、本文、作成日時をTableViewに表示
+- **操作UI**: 新規作成、編集、削除、更新の各操作に対応
+
+### DatabaseManager.java
+
+SQLiteへの接続を管理し、`messages`テーブルを初回起動時に作成します。
+テーブルが空の場合は、初期データとして`Hello World`を登録します。
+
+### MessageDao.java
+
+DAOパターンでデータアクセスを分離し、以下の操作を提供します：
+
+- メッセージの登録、取得、更新、削除
+- 最新メッセージの取得
+- メッセージ件数の取得
+- 全メッセージ削除後のデフォルトメッセージ復旧
+
+### データベース設計
+
+```sql
+CREATE TABLE messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+```
 
 ### pom.xml
 
@@ -176,6 +210,7 @@ Maven設定ファイルです。以下の設定が含まれています：
 
 - **Java 17対応**: 最新のJava機能を使用可能
 - **JavaFX依存関係**: JavaFX ControlsとFXMLライブラリ
+- **SQLite JDBC**: SQLite 3.42.0.0によるローカルデータ永続化
 - **プラグイン設定**: コンパイルと実行用の設定
 
 ## 開発ガイド
@@ -233,5 +268,3 @@ mvn compile
 ### ワークフロー詳細
 
 詳細な設定は `.github/workflows/ci.yml` ファイルをご確認ください。
-
-
