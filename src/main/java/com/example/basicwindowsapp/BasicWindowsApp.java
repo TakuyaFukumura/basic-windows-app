@@ -53,6 +53,7 @@ import java.util.logging.Logger;
  *   <li>SQLiteデータベースからメッセージを取得・表示</li>
  *   <li>メッセージの新規作成・編集・削除</li>
  *   <li>メッセージ一覧をTableViewで表示</li>
+ *   <li>メッセージ管理画面とアプリ情報画面をTabPaneで切替</li>
  *   <li>削除時のデフォルトメッセージ復旧機能</li>
  * </ul>
  *
@@ -241,19 +242,49 @@ public class BasicWindowsApp extends Application {
         
         MenuBar menuBar = createMenuBar();
 
-        // 上部：メインメッセージ表示エリア
-        VBox topSection = createTopSection(root);
-        root.setTop(new VBox(menuBar, topSection));
-        
-        // 中央：メッセージ一覧テーブル
-        VBox centerSection = createCenterSection();
-        root.setCenter(centerSection);
-        
-        // 下部：操作ボタン
-        HBox bottomSection = createBottomSection();
-        root.setBottom(bottomSection);
+        root.setTop(menuBar);
+        root.setCenter(createTabPane(root));
         
         return root;
+    }
+
+    private TabPane createTabPane(BorderPane root) {
+        TabPane tabPane = new TabPane();
+        Tab messagesTab = new Tab("メッセージ");
+        messagesTab.setClosable(false);
+        messagesTab.setContent(createMessageLayout(root));
+
+        Tab aboutTab = new Tab("アプリ情報");
+        aboutTab.setClosable(false);
+        aboutTab.setContent(createAboutLayout());
+
+        tabPane.getTabs().addAll(messagesTab, aboutTab);
+        return tabPane;
+    }
+
+    private BorderPane createMessageLayout(BorderPane root) {
+        BorderPane messageLayout = new BorderPane();
+        messageLayout.setTop(createTopSection(root));
+        messageLayout.setCenter(createCenterSection());
+        messageLayout.setBottom(createBottomSection());
+        return messageLayout;
+    }
+
+    private VBox createAboutLayout() {
+        VBox aboutLayout = new VBox(12);
+        aboutLayout.setPadding(new Insets(24));
+        aboutLayout.getStyleClass().add("center-section");
+
+        Label title = new Label("Basic Windows App");
+        title.getStyleClass().add("section-title");
+        Label description = new Label(
+                "JavaFX と SQLite を使用したメッセージ管理アプリケーションです。");
+        description.setWrapText(true);
+        Label storage = new Label(
+                "データ保存先: ユーザーホーム/.basic-windows-app");
+        storage.setWrapText(true);
+        aboutLayout.getChildren().addAll(title, description, storage);
+        return aboutLayout;
     }
     
     /**
